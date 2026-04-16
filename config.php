@@ -1,7 +1,7 @@
 <?php
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'statmed2');
-define('DB_USER', 'root'); // Default for most local dev environments
+define('DB_NAME', 'my_dottorci');
+define('DB_USER', 'dottorci'); // Default for most local dev environments
 define('DB_PASS', '');
 
 function getDB() {
