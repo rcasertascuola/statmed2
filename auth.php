@@ -26,13 +26,7 @@ function login($username, $password, $encryption_key) {
         if ($provided_key_hash === $stored_hash) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            $_SESSION['name'] = $user['name'] ?? $user['username'];
             $_SESSION['role'] = $user['role'];
-
-            // Log login
-            $stmt = $db->prepare("INSERT INTO activity_logs (user_id, action, details) VALUES (?, 'LOGIN', 'Utente ha effettuato l''accesso')");
-            $stmt->execute([$user['id']]);
-
             // We do NOT store the encryption key in the session server-side
             // as it should stay client-side for "true" client-side encryption.
             // But we can return success.

@@ -82,7 +82,7 @@ if (!isLoggedIn()): ?>
     <nav class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
         <h1 class="text-xl font-bold">StatMed2 Dashboard</h1>
         <div class="flex items-center space-x-4">
-            <span>Benvenuto, <strong><?php echo $_SESSION['name']; ?></strong> (<?php echo $_SESSION['role']; ?>)</span>
+            <span>Benvenuto, <strong><?php echo $_SESSION['username']; ?></strong> (<?php echo $_SESSION['role']; ?>)</span>
             <button onclick="exportCSV()" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm transition">Scarica CSV</button>
             <a href="?action=logout" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm transition">Logout</a>
         </div>
@@ -158,10 +158,10 @@ if (!isLoggedIn()): ?>
     <div id="detailsModal" class="modal">
         <div class="modal-content max-w-4xl">
             <h3 class="text-xl font-bold mb-4">Dettagli Clinici: <span id="detailPazienteNome"></span></h3>
-
+            
             <div class="mb-6">
                 <h4 class="font-bold border-b mb-2 flex justify-between">
-                    Interventi
+                    Interventi 
                     <button onclick="openInterventoModal()" class="text-blue-500 text-sm">+ Aggiungi</button>
                 </h4>
                 <div id="interventi-list" class="space-y-4"></div>
@@ -481,7 +481,7 @@ if (!isLoggedIn()): ?>
                             <button onclick="openRilevazioneModal(${i.id})" class="text-blue-500">+ Aggiungi</button>
                         </h5>
                         <div id="rilevazioni-for-${i.id}" class="space-y-1 mb-2"></div>
-
+                        
                         <h5 class="font-semibold text-xs border-b mb-1 flex justify-between">
                             Esito Weaning
                             <span id="esito-action-${i.id}"></span>
@@ -553,9 +553,9 @@ if (!isLoggedIn()): ?>
                 const roxWarning = r.rox_index < 3.85 ? 'text-red-600 font-bold' : '';
                 item.innerHTML = `
                     <span class="truncate pr-2">
-                        <strong>${r.fase}:</strong> FR ${r.fr}, TV ${r.tv},
-                        Tobin: <span class="${tobinWarning}">${r.tobin_index}</span>,
-                        ROX: <span class="${roxWarning}">${r.rox_index}</span>,
+                        <strong>${r.fase}:</strong> FR ${r.fr}, TV ${r.tv}, 
+                        Tobin: <span class="${tobinWarning}">${r.tobin_index}</span>, 
+                        ROX: <span class="${roxWarning}">${r.rox_index}</span>, 
                         SpO2 ${r.spo2}%, NRS ${r.nrs_dolore}
                     </span>
                     <span class="space-x-1 flex-shrink-0">
@@ -633,11 +633,11 @@ if (!isLoggedIn()): ?>
             const div = document.getElementById(`esito-for-${intervento_id}`);
             const actionSpan = document.getElementById(`esito-action-${intervento_id}`);
             div.innerHTML = '';
-
+            
             if (esiti.length > 0) {
                 const e = esiti[0];
                 div.innerHTML = `
-                    Successo: ${e.successo == 1 ? 'SÌ' : 'NO'}, Post: ${e.tipo_post_estubazione},
+                    Successo: ${e.successo == 1 ? 'SÌ' : 'NO'}, Post: ${e.tipo_post_estubazione}, 
                     Fallimento: ${e.fallimento_iot == 1 ? 'SÌ' : 'NO'} (${e.ore_da_estubazione_a_failure}h)
                 `;
                 actionSpan.innerHTML = `

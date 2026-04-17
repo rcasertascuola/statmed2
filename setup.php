@@ -13,14 +13,14 @@ try {
     if ($stmt->fetchColumn() == 0) {
         // Create 1 admin and 2 base users
         $users = [
-            ['admin', 'Amministratore', 'admin123', 'admin'],
-            ['user1', 'Operatore 1', 'user123', 'user'],
-            ['user2', 'Operatore 2', 'user123', 'user']
+            ['admin', 'admin123', 'admin'],
+            ['user1', 'user123', 'user'],
+            ['user2', 'user123', 'user']
         ];
 
-        $stmt = $db->prepare("INSERT INTO users (username, name, password_hash, role) VALUES (?, ?, ?, ?)");
+        $stmt = $db->prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)");
         foreach ($users as $u) {
-            $stmt->execute([$u[0], $u[1], password_hash($u[2], PASSWORD_DEFAULT), $u[3]]);
+            $stmt->execute([$u[0], password_hash($u[1], PASSWORD_DEFAULT), $u[2]]);
         }
         echo "Database initialized and 3 users created (admin/admin123, user1/user123, user2/user123).<br>";
         echo "IMPORTANT: The first login will set the global encryption key hash.";

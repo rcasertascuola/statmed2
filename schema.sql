@@ -1,18 +1,8 @@
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(100),
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'user') DEFAULT 'user'
-);
-
-CREATE TABLE IF NOT EXISTS activity_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    action VARCHAR(50),
-    details TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS app_settings (
