@@ -82,7 +82,7 @@ if (!isLoggedIn()): ?>
     <nav class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
         <h1 class="text-xl font-bold">StatMed2 Dashboard</h1>
         <div class="flex items-center space-x-4">
-            <span>Benvenuto, <strong><?php echo $_SESSION['name']; ?></strong> (<?php echo $_SESSION['role']; ?>)</span>
+            <span>Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?>, <strong><?php echo $_SESSION['name']; ?></strong> (<?php echo $_SESSION['role']; ?>)</span>
             <button onclick="exportCSV()" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm transition">Scarica CSV</button>
             <a href="?action=logout" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm transition">Logout</a>
         </div>
@@ -227,6 +227,8 @@ if (!isLoggedIn()): ?>
                     <label class="block text-sm font-medium text-gray-700">Fase</label>
                     <select id="r_fase" class="w-full p-2 border rounded">
                         <option value="PRE_SBT">PRE_SBT</option>
+                        <option value="SBT">SBT</option>
+                        <option value="ESTUBAZIONE">ESTUBAZIONE</option>
                         <option value="T0">T0</option>
                         <option value="T30">T30</option>
                         <option value="POST_2H">POST_2H</option>
@@ -273,6 +275,18 @@ if (!isLoggedIn()): ?>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">NAS Score</label>
                     <input type="number" step="0.1" id="r_nas" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Maschera Venturi (%-L\min)</label>
+                    <input type="text" id="r_venturi" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">HFNO (%-L/min)</label>
+                    <input type="text" id="r_hfno" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Niv (PEEP-Ps)</label>
+                    <input type="text" id="r_niv" class="w-full p-2 border rounded">
                 </div>
                 <div class="md:col-span-3 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('rilevazioneModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -551,12 +565,18 @@ if (!isLoggedIn()): ?>
                 item.className = 'text-xs bg-white p-1 rounded border flex justify-between items-center';
                 const tobinWarning = r.tobin_index > 105 ? 'text-red-600 font-bold' : (r.tobin_index > 80 ? 'text-orange-500' : '');
                 const roxWarning = r.rox_index < 3.85 ? 'text-red-600 font-bold' : '';
+
+                let extra = '';
+                if(r.maschera_venturi) extra += ` Venturi: ${r.maschera_venturi}`;
+                if(r.hfno) extra += ` HFNO: ${r.hfno}`;
+                if(r.niv) extra += ` NIV: ${r.niv}`;
+
                 item.innerHTML = `
                     <span class="truncate pr-2">
                         <strong>${r.fase}:</strong> FR ${r.fr}, TV ${r.tv},
                         Tobin: <span class="${tobinWarning}">${r.tobin_index}</span>,
                         ROX: <span class="${roxWarning}">${r.rox_index}</span>,
-                        SpO2 ${r.spo2}%, NRS ${r.nrs_dolore}
+                        SpO2 ${r.spo2}%, NRS ${r.nrs_dolore} ${extra}
                     </span>
                     <span class="space-x-1 flex-shrink-0">
                         <button onclick='openRilevazioneModal(${intervento_id}, ${JSON.stringify(r).replace(/'/g, "&apos;")})' class="text-yellow-600" title="Modifica">
@@ -589,6 +609,9 @@ if (!isLoggedIn()): ?>
                 document.getElementById('r_ps').value = r.pressure_support;
                 document.getElementById('r_dolore').value = r.nrs_dolore;
                 document.getElementById('r_nas').value = r.nas_score;
+                document.getElementById('r_venturi').value = r.maschera_venturi || '';
+                document.getElementById('r_hfno').value = r.hfno || '';
+                document.getElementById('r_niv').value = r.niv || '';
             }
             openModal('rilevazioneModal');
         }
@@ -609,7 +632,10 @@ if (!isLoggedIn()): ?>
                 peep: document.getElementById('r_peep').value,
                 pressure_support: document.getElementById('r_ps').value,
                 nrs_dolore: document.getElementById('r_dolore').value,
-                nas_score: document.getElementById('r_nas').value
+                nas_score: document.getElementById('r_nas').value,
+                maschera_venturi: document.getElementById('r_venturi').value,
+                hfno: document.getElementById('r_hfno').value,
+                niv: document.getElementById('r_niv').value
             };
             await fetch('api.php?action=rilevazioni', {
                 method: 'POST',

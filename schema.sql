@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(100),
+    sex ENUM('M', 'F') DEFAULT 'M',
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'user') DEFAULT 'user'
 );
@@ -57,6 +58,9 @@ CREATE TABLE IF NOT EXISTS rilevazioni_cliniche (
     pressure_support REAL,
     nrs_dolore INT,
     nas_score REAL,
+    maschera_venturi TEXT,
+    hfno TEXT,
+    niv TEXT,
     FOREIGN KEY (intervento_id) REFERENCES interventi(id) ON DELETE CASCADE
 );
 

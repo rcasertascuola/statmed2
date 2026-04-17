@@ -26,7 +26,8 @@ function login($username, $password, $encryption_key) {
         if ($provided_key_hash === $stored_hash) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            $_SESSION['name'] = $user['name'] ?? $user['username'];
+            $_SESSION['name'] = !empty($user['name']) ? $user['name'] : $user['username'];
+            $_SESSION['sex'] = $user['sex'] ?? 'M';
             $_SESSION['role'] = $user['role'];
 
             // Log login
