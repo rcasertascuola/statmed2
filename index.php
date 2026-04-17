@@ -79,13 +79,15 @@ if (!isLoggedIn()): ?>
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
+    <nav class="bg-blue-600 text-white p-4 shadow-lg flex flex-wrap justify-between items-center gap-2">
         <h1 class="text-xl font-bold">StatMed2 Dashboard</h1>
-        <div class="flex items-center space-x-4">
-            <span>Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?> <strong><?php echo $_SESSION['name']; ?></strong> (<?php echo $_SESSION['role']; ?>)</span>
-            <a href="stats.php" class="bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded text-sm transition">Statistiche</a>
-            <button onclick="exportCSV()" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm transition">Scarica CSV</button>
-            <a href="?action=logout" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm transition">Logout</a>
+        <div class="flex flex-wrap items-center gap-2 md:gap-4">
+            <span class="text-sm">Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?> <strong><?php echo $_SESSION['name']; ?></strong></span>
+            <div class="flex items-center space-x-2">
+                <a href="stats.php" class="bg-purple-500 hover:bg-purple-600 px-2 py-1 rounded text-xs md:text-sm transition">Statistiche</a>
+                <button onclick="exportCSV()" class="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-xs md:text-sm transition">CSV</button>
+                <a href="?action=logout" class="bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-xs md:text-sm transition">Esci</a>
+            </div>
         </div>
     </nav>
 

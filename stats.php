@@ -5,7 +5,7 @@ if (!isLoggedIn()) { header('Location: index.php'); exit; }
 $db = getDB();
 
 // Fetch all data for stats
-$sql = "SELECT p.id as paziente_id, p.nome_cognome, r.*, i.tipo_intervento, i.asa_score
+$sql = "SELECT p.id as paziente_id, p.nome_cognome, r.*, i.id as intervento_id, i.tipo_intervento, i.asa_score
         FROM pazienti p
         JOIN interventi i ON p.id = i.paziente_id
         JOIN rilevazioni_cliniche r ON i.id = r.intervento_id
@@ -30,19 +30,28 @@ foreach ($data as &$row) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-purple-600 text-white p-4 shadow-lg flex justify-between items-center">
+    <nav class="bg-purple-600 text-white p-4 shadow-lg flex flex-wrap justify-between items-center gap-2">
         <h1 class="text-xl font-bold">Analisi Dati Clinici</h1>
-        <a href="index.php" class="bg-white text-purple-600 px-3 py-1 rounded text-sm font-bold">Torna alla Dashboard</a>
+        <div class="flex items-center space-x-2">
+             <span class="hidden sm:inline text-sm opacity-80">Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?> <?php echo $_SESSION['name']; ?></span>
+             <a href="index.php" class="bg-white text-purple-600 px-3 py-1 rounded text-sm font-bold">Torna alla Dashboard</a>
+        </div>
     </nav>
 
     <main class="container mx-auto p-4">
         <div class="bg-white p-6 rounded-lg shadow mb-6">
             <h2 class="text-lg font-bold mb-4">Filtri e Pivot</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium">Paziente ID</label>
-                    <select id="filter-paziente" class="w-full p-2 border rounded" onchange="updateStats()">
+                    <select id="filter-paziente" class="w-full p-2 border rounded" onchange="populateInterventi(); updateStats();">
                         <option value="">Tutti i pazienti</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Intervento</label>
+                    <select id="filter-intervento" class="w-full p-2 border rounded" onchange="updateStats()">
+                        <option value="">Tutti gli interventi</option>
                     </select>
                 </div>
                 <div>
@@ -107,6 +116,7 @@ foreach ($data as &$row) {
 
         // Initialize filters
         const pSelect = document.getElementById('filter-paziente');
+        const iSelect = document.getElementById('filter-intervento');
         const uniquePazienti = [...new Set(rawData.map(r => r.paziente_id))];
         uniquePazienti.forEach(id => {
             const row = rawData.find(r => r.paziente_id === id);
@@ -116,15 +126,32 @@ foreach ($data as &$row) {
             pSelect.appendChild(opt);
         });
 
+        function populateInterventi() {
+            const pId = pSelect.value;
+            iSelect.innerHTML = '<option value="">Tutti gli interventi</option>';
+            const filteredRaw = pId ? rawData.filter(r => r.paziente_id == pId) : rawData;
+            const uniqueInt = [...new Set(filteredRaw.map(r => r.intervento_id))];
+            uniqueInt.forEach(id => {
+                const row = rawData.find(r => r.intervento_id === id);
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.text = `${row.tipo_intervento} (ID ${id})`;
+                iSelect.appendChild(opt);
+            });
+        }
+
         let chart = null;
 
         function updateStats() {
             const pId = document.getElementById('filter-paziente').value;
+            const iId = document.getElementById('filter-intervento').value;
             const fase = document.getElementById('filter-fase').value;
             const param = document.getElementById('filter-param').value;
 
             const filtered = rawData.filter(r => {
-                return (!pId || r.paziente_id == pId) && (!fase || r.fase == fase);
+                return (!pId || r.paziente_id == pId) &&
+                       (!iId || r.intervento_id == iId) &&
+                       (!fase || r.fase == fase);
             }).sort((a, b) => new Date(a.data_ora) - new Date(b.data_ora));
 
             // Update Table
