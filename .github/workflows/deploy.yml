@@ -12,7 +12,9 @@ jobs:
     steps:
     - name: Get latest code
       uses: actions/checkout@v4
-
+      with:
+          repository: rcasertascuola/statmed2 # Sostituire con il percorso reale
+          ref: main # Opzionale: specifica il branch
     - name: Sync files
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
