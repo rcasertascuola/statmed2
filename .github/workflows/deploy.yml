@@ -1,0 +1,31 @@
+name: Deploy via FTP
+
+on:
+  push:
+    branches:
+      - main  # Il trasferimento avviene solo su push nel branch main
+
+jobs:
+  web-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get latest code
+      uses: actions/checkout@v4
+      with:
+          repository: rcasertascuola/statmed2 # Sostituire con il percorso reale
+          ref: main # Opzionale: specifica il branch
+    - name: Sync files
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: ./  # Destinazione sul server Altervista
+        dangerous-clean-slate: false
+        dry-run: false
+        exclude: |
+                  **/abilita/**
+                  **/assets/**
+                  **/calendario/**
+                  **/competenze/**
