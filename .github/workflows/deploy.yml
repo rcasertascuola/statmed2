@@ -22,3 +22,7 @@ jobs:
         server-dir: ./  # Destinazione sul server Altervista
         dangerous-clean-slate: false
         dry-run: false
+        exclude: |
+                  **/abilita/**
+                  **/assets/**
+                  **/calendario/**
