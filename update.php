@@ -42,6 +42,7 @@ try {
     addColumnIfNotExists($db, 'rilevazioni_cliniche', 'maschera_venturi', "TEXT");
     addColumnIfNotExists($db, 'rilevazioni_cliniche', 'hfno', "TEXT");
     addColumnIfNotExists($db, 'rilevazioni_cliniche', 'niv', "TEXT");
+    addColumnIfNotExists($db, 'rilevazioni_cliniche', 'data_ora', "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     echo "<br><strong>Aggiornamento completato con successo!</strong>";
 

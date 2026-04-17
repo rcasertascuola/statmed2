@@ -110,12 +110,12 @@ function handleRilevazioni($db, $method) {
     } elseif ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
         if (isset($data['id']) && !empty($data['id'])) {
-            $stmt = $db->prepare("UPDATE rilevazioni_cliniche SET fase=?, fr=?, tv=?, tobin_index=?, spo2=?, fio2=?, rox_index=?, peep=?, pressure_support=?, nrs_dolore=?, nas_score=?, maschera_venturi=?, hfno=?, niv=? WHERE id=?");
-            $stmt->execute([$data['fase'], $data['fr'], $data['tv'], $data['tobin_index'], $data['spo2'], $data['fio2'], $data['rox_index'], $data['peep'], $data['pressure_support'], $data['nrs_dolore'], $data['nas_score'], $data['maschera_venturi'], $data['hfno'], $data['niv'], $data['id']]);
+            $stmt = $db->prepare("UPDATE rilevazioni_cliniche SET fase=?, fr=?, tv=?, tobin_index=?, spo2=?, fio2=?, rox_index=?, peep=?, pressure_support=?, nrs_dolore=?, nas_score=?, maschera_venturi=?, hfno=?, niv=?, data_ora=? WHERE id=?");
+            $stmt->execute([$data['fase'], $data['fr'], $data['tv'], $data['tobin_index'], $data['spo2'], $data['fio2'], $data['rox_index'], $data['peep'], $data['pressure_support'], $data['nrs_dolore'], $data['nas_score'], $data['maschera_venturi'], $data['hfno'], $data['niv'], $data['data_ora'], $data['id']]);
             logActivity($db, 'UPDATE_RILEVAZIONE', "ID: " . $data['id']);
         } else {
-            $stmt = $db->prepare("INSERT INTO rilevazioni_cliniche (intervento_id, fase, fr, tv, tobin_index, spo2, fio2, rox_index, peep, pressure_support, nrs_dolore, nas_score, maschera_venturi, hfno, niv) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$data['intervento_id'], $data['fase'], $data['fr'], $data['tv'], $data['tobin_index'], $data['spo2'], $data['fio2'], $data['rox_index'], $data['peep'], $data['pressure_support'], $data['nrs_dolore'], $data['nas_score'], $data['maschera_venturi'], $data['hfno'], $data['niv']]);
+            $stmt = $db->prepare("INSERT INTO rilevazioni_cliniche (intervento_id, fase, fr, tv, tobin_index, spo2, fio2, rox_index, peep, pressure_support, nrs_dolore, nas_score, maschera_venturi, hfno, niv, data_ora) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['intervento_id'], $data['fase'], $data['fr'], $data['tv'], $data['tobin_index'], $data['spo2'], $data['fio2'], $data['rox_index'], $data['peep'], $data['pressure_support'], $data['nrs_dolore'], $data['nas_score'], $data['maschera_venturi'], $data['hfno'], $data['niv'], $data['data_ora']]);
             logActivity($db, 'INSERT_RILEVAZIONE', "Intervento ID: " . $data['intervento_id']);
         }
         echo json_encode(['success' => true]);
@@ -164,7 +164,7 @@ function handleEsito($db, $method) {
 function handleAllData($db) {
     // Join all tables for CSV export
     $sql = "SELECT p.*, i.comorbilita, i.asa_score, i.tipo_intervento, i.urgenza, i.euroscore_ii, i.durata_cec_ore, i.timing_iot_h,
-            r.fase, r.fr, r.tv, r.tobin_index, r.spo2, r.fio2, r.rox_index, r.peep, r.pressure_support, r.nrs_dolore, r.nas_score, r.maschera_venturi, r.hfno, r.niv,
+            r.fase, r.fr, r.tv, r.tobin_index, r.spo2, r.fio2, r.rox_index, r.peep, r.pressure_support, r.nrs_dolore, r.nas_score, r.maschera_venturi, r.hfno, r.niv, r.data_ora,
             e.successo, e.tipo_post_estubazione, e.fallimento_iot, e.ore_da_estubazione_a_failure
             FROM pazienti p
             LEFT JOIN interventi i ON p.id = i.paziente_id

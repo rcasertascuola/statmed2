@@ -82,7 +82,8 @@ if (!isLoggedIn()): ?>
     <nav class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
         <h1 class="text-xl font-bold">StatMed2 Dashboard</h1>
         <div class="flex items-center space-x-4">
-            <span>Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?>, <strong><?php echo $_SESSION['name']; ?></strong> (<?php echo $_SESSION['role']; ?>)</span>
+            <span>Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?> <strong><?php echo $_SESSION['name']; ?></strong> (<?php echo $_SESSION['role']; ?>)</span>
+            <a href="stats.php" class="bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded text-sm transition">Statistiche</a>
             <button onclick="exportCSV()" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm transition">Scarica CSV</button>
             <a href="?action=logout" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm transition">Logout</a>
         </div>
@@ -136,11 +137,11 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Altezza (m)</label>
-                    <input type="number" step="0.01" id="p_altezza" oninput="calculateBMI()" class="w-full p-2 border rounded" required>
+                    <input type="number" step="0.01" min="0" max="3" id="p_altezza" oninput="calculateBMI()" class="w-full p-2 border rounded" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Peso (kg)</label>
-                    <input type="number" step="0.1" id="p_peso" oninput="calculateBMI()" class="w-full p-2 border rounded" required>
+                    <input type="number" step="0.1" min="0" id="p_peso" oninput="calculateBMI()" class="w-full p-2 border rounded" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">BMI (Auto)</label>
@@ -186,7 +187,7 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">ASA Score</label>
-                    <input type="number" id="i_asa" class="w-full p-2 border rounded">
+                    <input type="number" min="1" max="5" id="i_asa" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Tipo Intervento</label>
@@ -198,15 +199,15 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Euroscore II</label>
-                    <input type="number" step="0.01" id="i_euroscore" class="w-full p-2 border rounded">
+                    <input type="number" step="0.01" min="0" id="i_euroscore" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Durata CEC (ore)</label>
-                    <input type="number" step="0.1" id="i_cec" class="w-full p-2 border rounded">
+                    <input type="number" step="0.1" min="0" id="i_cec" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Timing IOT (h)</label>
-                    <input type="number" step="0.1" id="i_iot" class="w-full p-2 border rounded">
+                    <input type="number" step="0.1" min="0" id="i_iot" class="w-full p-2 border rounded">
                 </div>
                 <div class="md:col-span-2 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('interventoModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -224,6 +225,10 @@ if (!isLoggedIn()): ?>
                 <input type="hidden" id="r_id">
                 <input type="hidden" id="r_intervento_id">
                 <div>
+                    <label class="block text-sm font-medium text-gray-700">Data e Ora</label>
+                    <input type="datetime-local" id="r_data_ora" class="w-full p-2 border rounded" required>
+                </div>
+                <div>
                     <label class="block text-sm font-medium text-gray-700">Fase</label>
                     <select id="r_fase" class="w-full p-2 border rounded">
                         <option value="PRE_SBT">PRE_SBT</option>
@@ -238,11 +243,11 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">FR (Freq. Resp.)</label>
-                    <input type="number" step="0.1" id="r_fr" oninput="calculateIndices()" class="w-full p-2 border rounded">
+                    <input type="number" step="0.1" min="0" id="r_fr" oninput="calculateIndices()" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">TV (Vol. Corrente L)</label>
-                    <input type="number" step="0.001" id="r_tv" oninput="calculateIndices()" class="w-full p-2 border rounded">
+                    <input type="number" step="0.001" min="0" id="r_tv" oninput="calculateIndices()" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Tobin Index (RSBI)</label>
@@ -250,11 +255,11 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">SpO2 (%)</label>
-                    <input type="number" step="0.1" id="r_spo2" oninput="calculateIndices()" class="w-full p-2 border rounded">
+                    <input type="number" step="0.1" min="0" max="100" id="r_spo2" oninput="calculateIndices()" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">FiO2 (0.21-1.0)</label>
-                    <input type="number" step="0.01" id="r_fio2" oninput="calculateIndices()" class="w-full p-2 border rounded">
+                    <input type="number" step="0.01" min="0.21" max="1" id="r_fio2" oninput="calculateIndices()" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">ROX Index</label>
@@ -262,19 +267,19 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">PEEP</label>
-                    <input type="number" step="0.1" id="r_peep" class="w-full p-2 border rounded">
+                    <input type="number" step="0.1" min="0" id="r_peep" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Pressure Support</label>
-                    <input type="number" step="0.1" id="r_ps" class="w-full p-2 border rounded">
+                    <input type="number" step="0.1" min="0" id="r_ps" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">NRS Dolore (0-10)</label>
-                    <input type="number" id="r_dolore" class="w-full p-2 border rounded">
+                    <input type="number" min="0" max="10" id="r_dolore" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">NAS Score</label>
-                    <input type="number" step="0.1" id="r_nas" class="w-full p-2 border rounded">
+                    <input type="number" step="0.1" min="0" id="r_nas" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Maschera Venturi (%-L\min)</label>
@@ -321,7 +326,7 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Ore da estubazione a failure</label>
-                    <input type="number" step="0.1" id="e_ore" class="w-full p-2 border rounded">
+                    <input type="number" step="0.1" min="0" id="e_ore" class="w-full p-2 border rounded">
                 </div>
                 <div class="md:col-span-2 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('esitoModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -596,8 +601,15 @@ if (!isLoggedIn()): ?>
             document.getElementById('rilevazioneForm').reset();
             document.getElementById('r_intervento_id').value = intervento_id;
             document.getElementById('r_id').value = '';
+
+            // Set current time for new readings
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('r_data_ora').value = now.toISOString().slice(0, 16);
+
             if (r) {
                 document.getElementById('r_id').value = r.id;
+                document.getElementById('r_data_ora').value = r.data_ora.replace(' ', 'T').slice(0, 16);
                 document.getElementById('r_fase').value = r.fase;
                 document.getElementById('r_fr').value = r.fr;
                 document.getElementById('r_tv').value = r.tv;
@@ -622,6 +634,7 @@ if (!isLoggedIn()): ?>
             const data = {
                 id: document.getElementById('r_id').value,
                 intervento_id: int_id,
+                data_ora: document.getElementById('r_data_ora').value.replace('T', ' '),
                 fase: document.getElementById('r_fase').value,
                 fr: document.getElementById('r_fr').value,
                 tv: document.getElementById('r_tv').value,

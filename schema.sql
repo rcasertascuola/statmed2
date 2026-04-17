@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS rilevazioni_cliniche (
     maschera_venturi TEXT,
     hfno TEXT,
     niv TEXT,
+    data_ora DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (intervento_id) REFERENCES interventi(id) ON DELETE CASCADE
 );
 
