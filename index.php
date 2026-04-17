@@ -71,6 +71,8 @@ if (!isLoggedIn()): ?>
     <title>Dashboard - StatMed2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- Tesseract.js for OCR -->
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <!-- Heroicons for better UI -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -223,6 +225,25 @@ if (!isLoggedIn()): ?>
     <div id="rilevazioneModal" class="modal">
         <div class="modal-content">
             <h3 class="text-xl font-bold mb-4">Rilevazione Clinica</h3>
+            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                <div>
+                    <h4 class="font-bold text-blue-800">Acquisizione Rapida OCR</h4>
+                    <p class="text-xs text-blue-600">Scansiona uno schermo o un documento per compilare i campi</p>
+                </div>
+                <div>
+                    <label for="ocr-input" class="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
+                        <i class="ph ph-camera text-xl"></i>
+                        <span>Scansiona</span>
+                    </label>
+                    <input type="file" id="ocr-input" accept="image/*" capture="environment" class="hidden" onchange="handleOCR(event)">
+                </div>
+            </div>
+
+            <!-- OCR Progress -->
+            <div id="ocr-status" class="hidden mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700 animate-pulse">
+                <span id="ocr-message">Elaborazione immagine...</span>
+            </div>
+
             <form id="rilevazioneForm" onsubmit="saveRilevazione(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input type="hidden" id="r_id">
                 <input type="hidden" id="r_intervento_id">
@@ -776,6 +797,76 @@ if (!isLoggedIn()): ?>
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        // --- OCR LOGIC ---
+        async function handleOCR(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('ocr-status');
+            const message = document.getElementById('ocr-message');
+            status.classList.remove('hidden');
+            message.innerText = "Avvio OCR (caricamento motore)...";
+
+            try {
+                // Initialize worker
+                const worker = await Tesseract.createWorker(['ita', 'eng'], 1, {
+                    logger: m => {
+                        if(m.status === 'recognizing text') {
+                            message.innerText = `Riconoscimento: ${Math.round(m.progress * 100)}%`;
+                        }
+                    }
+                });
+
+                const ret = await worker.recognize(file);
+                const text = ret.data.text;
+                await worker.terminate();
+
+                parseOCRText(text);
+                status.classList.add('hidden');
+            } catch (error) {
+                console.error(error);
+                message.innerText = "Errore durante l'acquisizione.";
+                setTimeout(() => status.classList.add('hidden'), 3000);
+            }
+        }
+
+        function parseOCRText(text) {
+            console.log("OCR RAW TEXT:", text);
+            // Semantic Parsing with RegEx
+            const mappings = [
+                { field: 'r_fr', keywords: ['FR', 'RR', 'FREQ', 'RESP', 'RES'] },
+                { field: 'r_spo2', keywords: ['SPO2', 'SAT', 'O2', 'SPO'] },
+                { field: 'r_fio2', keywords: ['FIO2', 'FI'] },
+                { field: 'r_fr', keywords: ['RR', 'FR'] },
+                { field: 'r_peep', keywords: ['PEEP', 'PEP'] },
+                { field: 'r_ps', keywords: ['PS', 'SUPPORT', 'SUP'] },
+                { field: 'r_dolore', keywords: ['NRS', 'PAIN', 'DOLORE', 'DOL'] },
+                { field: 'r_tv', keywords: ['TV', 'VOL', 'TIDAL'] }
+            ];
+
+            // Normalize text: uppercase and remove extra spaces
+            const cleanText = text.toUpperCase().replace(/\s+/g, ' ');
+
+            mappings.forEach(m => {
+                m.keywords.forEach(key => {
+                    // Search for keyword followed by a number (allowing colon or equals)
+                    // e.g. "FR: 20", "SPO2=98", "FR 15"
+                    const regex = new RegExp(`${key}\\s*[:=]?\\s*(\\d+[.,]?\\d*)`, 'i');
+                    const match = cleanText.match(regex);
+                    if (match && match[1]) {
+                        const value = match[1].replace(',', '.');
+                        const input = document.getElementById(m.field);
+                        if (input && (!input.value || input.value == 0)) {
+                            input.value = value;
+                        }
+                    }
+                });
+            });
+
+            // Trigger index calculations
+            calculateIndices();
         }
 
         // Initial load

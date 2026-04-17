@@ -4,8 +4,8 @@ require_once 'config.php';
 try {
     $db = getDB();
 
-    // Create tables from schema.sql
-    $sql = file_get_contents('schema.sql');
+    // Create tables from schema_sqlite.sql
+    $sql = file_get_contents('schema_sqlite.sql');
     $db->exec($sql);
 
     // Check if users exist
