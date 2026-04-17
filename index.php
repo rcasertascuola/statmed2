@@ -71,8 +71,6 @@ if (!isLoggedIn()): ?>
     <title>Dashboard - StatMed2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <!-- Heroicons for better UI -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
         .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 800px; border-radius: 8px; }
@@ -95,15 +93,15 @@ if (!isLoggedIn()): ?>
         </div>
 
         <div class="bg-white rounded-lg shadow overflow-x-auto">
-            <table class="w-full text-left border-collapse text-sm md:text-base">
+            <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-100 border-b">
-                        <th class="p-2 md:p-4">ID</th>
-                        <th class="p-2 md:p-4">Paziente</th>
-                        <th class="p-2 md:p-4">S</th>
-                        <th class="p-2 md:p-4">Età</th>
-                        <th class="p-2 md:p-4">BMI</th>
-                        <th class="p-2 md:p-4 text-center">Azioni</th>
+                        <th class="p-4">ID</th>
+                        <th class="p-4">Nome Cognome</th>
+                        <th class="p-4">Sesso</th>
+                        <th class="p-4">Età</th>
+                        <th class="p-4">BMI</th>
+                        <th class="p-4">Azioni</th>
                     </tr>
                 </thead>
                 <tbody id="pazienti-table-body">
@@ -389,24 +387,15 @@ if (!isLoggedIn()): ?>
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-gray-50';
                 row.innerHTML = `
-                    <td class="p-2 md:p-4">${p.id}</td>
-                    <td class="p-2 md:p-4 font-medium">${decrypt(p.nome_cognome)}</td>
-                    <td class="p-2 md:p-4">${p.sesso}</td>
-                    <td class="p-2 md:p-4">${p.eta}</td>
-                    <td class="p-2 md:p-4">${p.bmi}</td>
-                    <td class="p-2 md:p-4">
-                        <div class="flex items-center justify-center space-x-1 md:space-x-2">
-                            <button onclick='viewDetails(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-blue-500 hover:text-blue-700 p-1" title="Dettagli">
-                                <i class="ph ph-eye text-lg md:text-xl"></i>
-                            </button>
-                            <button onclick='openPazienteModal(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-yellow-600 hover:text-yellow-800 p-1" title="Modifica">
-                                <i class="ph ph-pencil-line text-lg md:text-xl"></i>
-                            </button>
-                            ${isAdmin ? `
-                            <button onclick="deletePaziente(${p.id})" class="text-red-500 hover:text-red-700 p-1" title="Elimina">
-                                <i class="ph ph-trash text-lg md:text-xl"></i>
-                            </button>` : ''}
-                        </div>
+                    <td class="p-4">${p.id}</td>
+                    <td class="p-4 font-medium">${decrypt(p.nome_cognome)}</td>
+                    <td class="p-4">${p.sesso}</td>
+                    <td class="p-4">${p.eta}</td>
+                    <td class="p-4">${p.bmi}</td>
+                    <td class="p-4 space-x-2">
+                        <button onclick='viewDetails(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-blue-500 hover:underline">Dettagli</button>
+                        <button onclick='openPazienteModal(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-yellow-600 hover:underline">Modifica</button>
+                        ${isAdmin ? `<button onclick="deletePaziente(${p.id})" class="text-red-500 hover:underline">Elimina</button>` : ''}
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -462,14 +451,9 @@ if (!isLoggedIn()): ?>
                         <div>
                             <strong>${i.tipo_intervento}</strong> - ASA: ${i.asa_score} - ${i.urgenza ? 'URGENTE' : 'Elezione'}
                         </div>
-                        <div class="space-x-2 flex">
-                            <button onclick='openInterventoModal(${JSON.stringify(i).replace(/'/g, "&apos;")})' class="text-yellow-600 p-1" title="Modifica">
-                                <i class="ph ph-pencil-line text-lg"></i>
-                            </button>
-                            ${isAdmin ? `
-                            <button onclick="deleteIntervento(${i.id})" class="text-red-500 p-1" title="Elimina">
-                                <i class="ph ph-trash text-lg"></i>
-                            </button>` : ''}
+                        <div class="space-x-2">
+                            <button onclick='openInterventoModal(${JSON.stringify(i).replace(/'/g, "&apos;")})' class="text-yellow-600 text-xs hover:underline">Modifica</button>
+                            ${isAdmin ? `<button onclick="deleteIntervento(${i.id})" class="text-red-500 text-xs hover:underline">Elimina</button>` : ''}
                         </div>
                     </div>
                     <div class="text-sm text-gray-600 mb-2">
@@ -552,20 +536,15 @@ if (!isLoggedIn()): ?>
                 const tobinWarning = r.tobin_index > 105 ? 'text-red-600 font-bold' : (r.tobin_index > 80 ? 'text-orange-500' : '');
                 const roxWarning = r.rox_index < 3.85 ? 'text-red-600 font-bold' : '';
                 item.innerHTML = `
-                    <span class="truncate pr-2">
+                    <span>
                         <strong>${r.fase}:</strong> FR ${r.fr}, TV ${r.tv},
                         Tobin: <span class="${tobinWarning}">${r.tobin_index}</span>,
                         ROX: <span class="${roxWarning}">${r.rox_index}</span>,
                         SpO2 ${r.spo2}%, NRS ${r.nrs_dolore}
                     </span>
-                    <span class="space-x-1 flex-shrink-0">
-                        <button onclick='openRilevazioneModal(${intervento_id}, ${JSON.stringify(r).replace(/'/g, "&apos;")})' class="text-yellow-600" title="Modifica">
-                            <i class="ph ph-pencil-line"></i>
-                        </button>
-                        ${isAdmin ? `
-                        <button onclick="deleteRilevazione(${r.id}, ${intervento_id})" class="text-red-500" title="Elimina">
-                            <i class="ph ph-trash"></i>
-                        </button>` : ''}
+                    <span class="space-x-1">
+                        <button onclick='openRilevazioneModal(${intervento_id}, ${JSON.stringify(r).replace(/'/g, "&apos;")})' class="text-yellow-600 hover:underline">M</button>
+                        ${isAdmin ? `<button onclick="deleteRilevazione(${r.id}, ${intervento_id})" class="text-red-500 hover:underline">X</button>` : ''}
                     </span>
                 `;
                 div.appendChild(item);
@@ -641,15 +620,8 @@ if (!isLoggedIn()): ?>
                     Fallimento: ${e.fallimento_iot == 1 ? 'SÌ' : 'NO'} (${e.ore_da_estubazione_a_failure}h)
                 `;
                 actionSpan.innerHTML = `
-                    <div class="flex space-x-2">
-                        <button onclick='openEsitoModal(${intervento_id}, ${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-yellow-600" title="Modifica">
-                             <i class="ph ph-pencil-line"></i>
-                        </button>
-                        ${isAdmin ? `
-                        <button onclick="deleteEsito(${e.id}, ${intervento_id})" class="text-red-500" title="Elimina">
-                             <i class="ph ph-trash"></i>
-                        </button>` : ''}
-                    </div>
+                    <button onclick='openEsitoModal(${intervento_id}, ${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-yellow-600 hover:underline">Modifica</button>
+                    ${isAdmin ? `<button onclick="deleteEsito(${e.id}, ${intervento_id})" class="text-red-500 hover:underline ml-2">X</button>` : ''}
                 `;
             } else {
                 div.innerHTML = '<span class="text-gray-400">Nessun esito registrato</span>';
