@@ -14,6 +14,11 @@ try {
     echo "Analisi dati esistenti per inizializzazione range...<br>";
 
     $parameters = [
+        // Pazienti
+        'eta' => ['unit' => 'anni', 'step' => 1, 'table' => 'pazienti', 'category' => 'pazienti'],
+        'altezza' => ['unit' => 'm', 'step' => 0.01, 'table' => 'pazienti', 'category' => 'pazienti'],
+        'peso' => ['unit' => 'kg', 'step' => 0.1, 'table' => 'pazienti', 'category' => 'pazienti'],
+        'bmi' => ['unit' => 'kg/m2', 'step' => 0.01, 'table' => 'pazienti', 'category' => 'pazienti'],
         // Rilevazioni
         'fr' => ['unit' => 'bpm', 'step' => 0.1, 'table' => 'rilevazioni_cliniche', 'category' => 'rilevazioni'],
         'tv' => ['unit' => 'L', 'step' => 0.001, 'table' => 'rilevazioni_cliniche', 'category' => 'rilevazioni'],

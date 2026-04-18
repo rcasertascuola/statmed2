@@ -92,6 +92,7 @@ if (!isAdmin()) { header('Location: index.php'); exit; }
             container.innerHTML = '';
 
             const categories = {
+                'pazienti': 'Anagrafica Paziente',
                 'rilevazioni': 'Rilevazioni Cliniche',
                 'interventi': 'Parametri Intervento',
                 'esiti': 'Parametri Esito'

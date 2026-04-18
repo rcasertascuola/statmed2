@@ -5,7 +5,9 @@ if (!isLoggedIn()) { header('Location: index.php'); exit; }
 $db = getDB();
 
 // Fetch all data for stats
-$sql = "SELECT p.id as paziente_id, p.nome_cognome, r.*, i.id as intervento_id, i.tipo_intervento, i.asa_score
+$sql = "SELECT p.id as paziente_id, p.nome_cognome, p.eta, p.altezza, p.peso, p.bmi,
+               r.*,
+               i.id as intervento_id, i.tipo_intervento, i.asa_score, i.euroscore_ii, i.durata_cec_ore, i.timing_iot_h
         FROM pazienti p
         JOIN interventi i ON p.id = i.paziente_id
         JOIN rilevazioni_cliniche r ON i.id = r.intervento_id
@@ -98,13 +100,29 @@ foreach ($data as &$row) {
                         <div class="pt-4 border-t border-gray-100">
                             <label class="block text-xs font-bold text-purple-600 mb-1 uppercase">Parametro da Analizzare</label>
                             <select id="filter-param" class="w-full p-2 bg-purple-50 border border-purple-200 rounded-lg text-sm font-bold text-purple-700" onchange="updateStats()">
-                                <option value="tobin_index">Indice di Tobin (RSBI)</option>
-                                <option value="rox_index">ROX Index</option>
-                                <option value="fr">Freq. Respiratoria (FR)</option>
-                                <option value="spo2">Saturazione (SpO2)</option>
-                                <option value="tv">Vol. Corrente (TV)</option>
-                                <option value="peep">PEEP</option>
-                                <option value="pressure_support">Pressure Support</option>
+                                <optgroup label="Indici Weaning">
+                                    <option value="tobin_index">Indice di Tobin (RSBI)</option>
+                                    <option value="rox_index">ROX Index</option>
+                                </optgroup>
+                                <optgroup label="Parametri Vitali">
+                                    <option value="fr">Freq. Respiratoria (FR)</option>
+                                    <option value="spo2">Saturazione (SpO2)</option>
+                                    <option value="tv">Vol. Corrente (TV)</option>
+                                    <option value="peep">PEEP</option>
+                                    <option value="pressure_support">Pressure Support</option>
+                                </optgroup>
+                                <optgroup label="Anagrafica">
+                                    <option value="eta">Età</option>
+                                    <option value="bmi">BMI</option>
+                                    <option value="peso">Peso</option>
+                                    <option value="altezza">Altezza</option>
+                                </optgroup>
+                                <optgroup label="Intervento">
+                                    <option value="asa_score">ASA Score</option>
+                                    <option value="euroscore_ii">Euroscore II</option>
+                                    <option value="durata_cec_ore">Durata CEC (h)</option>
+                                    <option value="timing_iot_h">Timing IOT (h)</option>
+                                </optgroup>
                             </select>
                         </div>
                     </div>

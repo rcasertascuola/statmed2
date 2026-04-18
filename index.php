@@ -155,19 +155,19 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Età</label>
-                    <input type="number" id="p_eta" class="w-full p-2 border rounded" required>
+                    <input type="number" inputmode="numeric" id="p_eta" oninput="validateParam('eta', this)" class="w-full p-2 border rounded" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Altezza (m)</label>
-                    <input type="number" step="0.01" min="0" max="3" id="p_altezza" oninput="calculateBMI()" class="w-full p-2 border rounded" required>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" max="3" id="p_altezza" oninput="calculateBMI(); validateParam('altezza', this)" class="w-full p-2 border rounded" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Peso (kg)</label>
-                    <input type="number" step="0.1" min="0" id="p_peso" oninput="calculateBMI()" class="w-full p-2 border rounded" required>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="p_peso" oninput="calculateBMI(); validateParam('peso', this)" class="w-full p-2 border rounded" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">BMI (Auto)</label>
-                    <input type="number" step="0.01" id="p_bmi" class="w-full p-2 border bg-gray-100" readonly>
+                    <input type="number" step="0.01" id="p_bmi" oninput="validateParam('bmi', this)" class="w-full p-2 border bg-gray-100" readonly>
                 </div>
                 <div class="md:col-span-2 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('pazienteModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -514,7 +514,10 @@ if (!isLoggedIn()): ?>
             const h = parseFloat(document.getElementById('p_altezza').value);
             const w = parseFloat(document.getElementById('p_peso').value);
             if (h > 0 && w > 0) {
-                document.getElementById('p_bmi').value = (w / (h * h)).toFixed(2);
+                const bmi = (w / (h * h)).toFixed(2);
+                const input = document.getElementById('p_bmi');
+                input.value = bmi;
+                validateParam('bmi', input);
             }
         }
 
@@ -544,6 +547,7 @@ if (!isLoggedIn()): ?>
 
         function openPazienteModal(paziente = null) {
             document.getElementById('pazienteForm').reset();
+            document.querySelectorAll('#pazienteForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
             document.getElementById('p_id').value = '';
             if (paziente) {
                 document.getElementById('p_id').value = paziente.id;
@@ -553,6 +557,12 @@ if (!isLoggedIn()): ?>
                 document.getElementById('p_altezza').value = paziente.altezza;
                 document.getElementById('p_peso').value = paziente.peso;
                 document.getElementById('p_bmi').value = paziente.bmi;
+
+                // Validate
+                ['eta', 'altezza', 'peso', 'bmi'].forEach(p => {
+                    const input = document.getElementById('p_' + p);
+                    if (input) validateParam(p, input);
+                });
             }
             openModal('pazienteModal');
         }
@@ -592,6 +602,11 @@ if (!isLoggedIn()): ?>
 
         async function savePaziente(e) {
             e.preventDefault();
+
+            if (document.querySelectorAll('#pazienteForm .range-critical').length > 0) {
+                if (!confirm("Attenzione: alcuni dati del paziente sono fuori dai range critici. Procedere?")) return;
+            }
+
             const data = {
                 id: document.getElementById('p_id').value,
                 nome_cognome: encrypt(document.getElementById('p_nome').value),
