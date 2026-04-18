@@ -44,9 +44,10 @@ try {
     addColumnIfNotExists($db, 'rilevazioni_cliniche', 'niv', "TEXT");
     addColumnIfNotExists($db, 'rilevazioni_cliniche', 'data_ora', "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
-    // 5. Create clinical_ranges table
+    // 5. Create clinical_ranges table with category
     $db->exec("CREATE TABLE IF NOT EXISTS clinical_ranges (
         parameter VARCHAR(50) PRIMARY KEY,
+        category VARCHAR(50) DEFAULT 'rilevazioni',
         min_normal REAL,
         max_normal REAL,
         min_critical REAL,
@@ -54,7 +55,44 @@ try {
         step REAL DEFAULT 0.1,
         unit VARCHAR(20)
     )");
-    echo "Tabella clinical_ranges verificata/creata.<br>";
+    addColumnIfNotExists($db, 'clinical_ranges', 'category', "VARCHAR(50) DEFAULT 'rilevazioni'");
+    echo "Tabella clinical_ranges verificata/aggiornata.<br>";
+
+    // 6. Create tag_library table
+    $db->exec("CREATE TABLE IF NOT EXISTS tag_library (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        category VARCHAR(50),
+        name VARCHAR(100) NOT NULL,
+        UNIQUE(category, name)
+    )");
+    echo "Tabella tag_library verificata/creata.<br>";
+
+    // 7. Migration of existing text to tags
+    echo "Migrazione testi in tag...<br>";
+    $text_fields = [
+        'rilevazioni_cliniche' => ['maschera_venturi', 'hfno', 'niv'],
+        'interventi' => ['comorbilita', 'tipo_intervento'],
+        'esito_weaning' => ['tipo_post_estubazione']
+    ];
+
+    foreach ($text_fields as $table => $fields) {
+        foreach ($fields as $field) {
+            $stmt = $db->query("SELECT DISTINCT $field FROM $table WHERE $field IS NOT NULL AND $field != ''");
+            while ($row = $stmt->fetch()) {
+                $val = trim($row[$field]);
+                if (empty($val)) continue;
+
+                // For comma separated values, split them
+                $parts = array_map('trim', explode(',', $val));
+                foreach ($parts as $part) {
+                    if (empty($part)) continue;
+                    $ins = $db->prepare("INSERT IGNORE INTO tag_library (category, name) VALUES (?, ?)");
+                    $ins->execute([$field, $part]);
+                }
+            }
+        }
+    }
+    echo "Migrazione completata.<br>";
 
     echo "<br><strong>Aggiornamento completato con successo!</strong>";
 

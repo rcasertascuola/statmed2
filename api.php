@@ -37,6 +37,9 @@ switch ($action) {
     case 'ranges':
         handleRanges($db, $method);
         break;
+    case 'tags':
+        handleTags($db, $method);
+        break;
     default:
         echo json_encode(['error' => 'Invalid action']);
         break;
@@ -179,7 +182,7 @@ function handleAllData($db) {
 
 function handleRanges($db, $method) {
     if ($method === 'GET') {
-        $stmt = $db->query("SELECT * FROM clinical_ranges");
+        $stmt = $db->query("SELECT * FROM clinical_ranges ORDER BY category, parameter");
         echo json_encode($stmt->fetchAll());
     } elseif ($method === 'POST') {
         if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
@@ -195,6 +198,30 @@ function handleRanges($db, $method) {
             $data['parameter'] ?? ''
         ]);
         logActivity($db, 'UPDATE_RANGE', "Parametro: " . ($data['parameter'] ?? 'unknown'));
+        echo json_encode(['success' => true]);
+    }
+}
+
+function handleTags($db, $method) {
+    if ($method === 'GET') {
+        $category = $_GET['category'] ?? null;
+        if ($category) {
+            $stmt = $db->prepare("SELECT name FROM tag_library WHERE category = ? ORDER BY name");
+            $stmt->execute([$category]);
+        } else {
+            $stmt = $db->query("SELECT * FROM tag_library ORDER BY category, name");
+        }
+        echo json_encode($stmt->fetchAll());
+    } elseif ($method === 'POST') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $stmt = $db->prepare("INSERT IGNORE INTO tag_library (category, name) VALUES (?, ?)");
+        $stmt->execute([$data['category'], $data['name']]);
+        echo json_encode(['success' => true]);
+    } elseif ($method === 'DELETE') {
+        if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
+        $id = $_GET['id'];
+        $stmt = $db->prepare("DELETE FROM tag_library WHERE id = ?");
+        $stmt->execute([$id]);
         echo json_encode(['success' => true]);
     }
 }

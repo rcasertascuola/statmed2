@@ -77,12 +77,20 @@ CREATE TABLE IF NOT EXISTS esito_weaning (
 
 CREATE TABLE IF NOT EXISTS clinical_ranges (
     parameter VARCHAR(50) PRIMARY KEY,
+    category VARCHAR(50) DEFAULT 'rilevazioni',
     min_normal REAL,
     max_normal REAL,
     min_critical REAL,
     max_critical REAL,
     step REAL DEFAULT 0.1,
     unit VARCHAR(20)
+);
+
+CREATE TABLE IF NOT EXISTS tag_library (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category VARCHAR(50),
+    name VARCHAR(100) NOT NULL,
+    UNIQUE(category, name)
 );
 
 -- Indici richiesti
