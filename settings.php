@@ -45,6 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $stmt->execute([$_POST['user_id'], $_POST['team_id'], isset($_POST['can_edit_all']) ? 1 : 0]);
                 $message = "Utente assegnato all'equipe.";
                 break;
+            case 'add_user':
+                $user_pass = password_hash($_POST['password'], PASSWORD_DEFAULT);
+                $stmt = $db->prepare("INSERT INTO users (username, name, sex, password_hash, role) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$_POST['username'], $_POST['name'], $_POST['sex'], $user_pass, $_POST['role']]);
+                $message = "Nuovo utente creato.";
+                break;
             case 'set_team_key':
                 $team_id = $_POST['team_id'];
                 $leader_pass = $_POST['leader_password'];
@@ -104,6 +110,7 @@ $users = $db->query("SELECT * FROM users")->fetchAll();
         <div class="flex border-b mb-6 overflow-x-auto">
             <button onclick="openTab('teams-tab')" id="btn-teams-tab" class="tab-btn active px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 whitespace-nowrap">Equipe e Ospedali</button>
             <button onclick="openTab('users-tab')" id="btn-users-tab" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 whitespace-nowrap">Gestione Utenti</button>
+            <button onclick="openTab('new-user-tab')" id="btn-new-user-tab" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 whitespace-nowrap">Nuovo Utente</button>
             <button onclick="openTab('ranges-tab')" id="btn-ranges-tab" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 whitespace-nowrap">Range Clinici</button>
             <button onclick="openTab('tags-tab')" id="btn-tags-tab" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 whitespace-nowrap">Libreria Tag</button>
         </div>
@@ -197,6 +204,45 @@ $users = $db->query("SELECT * FROM users")->fetchAll();
                         <input type="password" name="leader_password" class="w-full p-2 border rounded" required>
                     </div>
                     <button type="submit" class="bg-red-600 text-white p-2 rounded shadow font-bold">Salva Chiave</button>
+                </form>
+            </section>
+        </div>
+
+        <!-- NEW USER TAB -->
+        <div id="new-user-tab" class="tab-content space-y-6">
+            <section class="bg-white p-6 rounded-lg shadow max-w-lg mx-auto">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="ph ph-user-plus"></i> Crea Nuovo Utente</h2>
+                <form method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="add_user">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Username</label>
+                        <input type="text" name="username" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nome e Cognome</label>
+                        <input type="text" name="name" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Sesso</label>
+                            <select name="sex" class="w-full p-2 border rounded">
+                                <option value="M">M</option>
+                                <option value="F">F</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Ruolo</label>
+                            <select name="role" class="w-full p-2 border rounded">
+                                <option value="user">User (Medico)</option>
+                                <option value="admin">Admin (Super User)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Password Iniziale</label>
+                        <input type="password" name="password" class="w-full p-2 border rounded" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 transition">Crea Utente</button>
                 </form>
             </section>
         </div>
@@ -309,30 +355,6 @@ $users = $db->query("SELECT * FROM users")->fetchAll();
                         <input type="text" id="new-tag-name" placeholder="Nome etichetta..." class="flex-1 p-2 border rounded text-sm">
                         <button onclick="addTag()" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700 shadow transition">Aggiungi</button>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Crea Equipe</button>
-                </form>
-
-                <div class="space-y-4">
-                    <h3 class="font-bold text-sm uppercase text-gray-400">Assegna Membro</h3>
-                    <form method="POST" class="space-y-2">
-                        <input type="hidden" name="action" value="assign_user_team">
-                        <select name="user_id" class="w-full p-2 border rounded" required>
-                            <option value="">Seleziona Utente...</option>
-                            <?php foreach ($users as $u): ?>
-                                <option value="<?php echo $u['id']; ?>"><?php echo htmlspecialchars($u['name'] ?? $u['username']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <select name="team_id" class="w-full p-2 border rounded" required>
-                            <option value="">Seleziona Equipe...</option>
-                            <?php foreach ($teams as $t): ?>
-                                <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <label class="flex items-center gap-2 text-sm">
-                            <input type="checkbox" name="can_edit_all"> Abilitato a modificare tutto il team
-                        </label>
-                        <button type="submit" class="w-full bg-gray-700 text-white p-2 rounded">Assegna</button>
-                    </form>
                 </div>
                 <div id="tags-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Loaded via JS -->
