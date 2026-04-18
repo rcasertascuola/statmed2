@@ -23,7 +23,7 @@ try {
             $stmt->execute([$u[0], $u[1], $u[2], password_hash($u[3], PASSWORD_DEFAULT), $u[4]]);
         }
         echo "Database initialized and 3 users created (admin/admin123, user1/user123, user2/user123).<br>";
-        echo "IMPORTANT: The first login will set the global encryption key hash.";
+        echo "Si prega di eseguire update_v2.php e migrate_data.php per completare la configurazione delle equipe.";
     } else {
         echo "Database already initialized.";
     }
