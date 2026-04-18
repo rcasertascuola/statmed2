@@ -29,3 +29,5 @@ jobs:
                   **/assets/**
                   **/calendario/**
                   **/competenze/**
+                  **/.git*
+                  **/.git*/**
