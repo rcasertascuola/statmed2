@@ -17,20 +17,20 @@ if (isAdmin()) {
     $current_team_id = null;
     $team_key = null;
 } else {
-    // If user belongs to only one team and is a leader, we might already have the key
+    // If user belongs to only one team, select it automatically
     $current_team_id = $_SESSION['active_team_id'] ?? (count($teams) === 1 ? $teams[0]['id'] : null);
-}
 
-if ($current_team_id) {
-    $_SESSION['active_team_id'] = $current_team_id;
-    // Check if we have the key for this team
-    if (isset($_SESSION['managed_teams'][$current_team_id])) {
-        $team_key = $_SESSION['managed_teams'][$current_team_id];
+    if ($current_team_id) {
+        $_SESSION['active_team_id'] = $current_team_id;
+        // Check if we have the key for this team
+        if (isset($_SESSION['managed_teams'][$current_team_id])) {
+            $team_key = $_SESSION['managed_teams'][$current_team_id];
+        } else {
+            $team_key = $_SESSION['team_keys'][$current_team_id] ?? null;
+        }
     } else {
-        $team_key = $_SESSION['team_keys'][$current_team_id] ?? null;
+        $team_key = null;
     }
-} else {
-    $team_key = null;
 }
 
 // Handle team selection and key entry
@@ -180,9 +180,16 @@ if (isset($_GET['change_team'])) {
                 <a href="settings.php" class="flex-1 min-w-[200px] bg-gray-800 text-white p-6 rounded-xl shadow-lg hover:bg-gray-900 transition flex items-center justify-between">
                     <div>
                         <h4 class="text-xl font-bold">Equipe</h4>
-                        <p class="text-sm opacity-80">Gestione team e range</p>
+                        <p class="text-sm opacity-80">Gestione team e membri</p>
                     </div>
                     <i class="ph ph-users-four text-4xl"></i>
+                </a>
+                <a href="clinical_config.php" class="flex-1 min-w-[200px] bg-emerald-600 text-white p-6 rounded-xl shadow-lg hover:bg-emerald-700 transition flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xl font-bold">Config</h4>
+                        <p class="text-sm opacity-80">Range e Tag clinici</p>
+                    </div>
+                    <i class="ph ph-stethoscope text-4xl"></i>
                 </a>
                 <?php endif; ?>
             </div>
