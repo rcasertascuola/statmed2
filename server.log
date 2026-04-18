@@ -1,43 +1,13 @@
-[Sat Apr 18 17:41:15 2026] PHP 8.3.6 Development Server (http://localhost:8080) started
-[Sat Apr 18 17:41:19 2026] [::1]:49438 Accepted
-[Sat Apr 18 17:41:19 2026] [::1]:49438 [200]: GET /login.php
-[Sat Apr 18 17:41:19 2026] [::1]:49438 Closing
-[Sat Apr 18 17:41:19 2026] [::1]:49444 Accepted
-[Sat Apr 18 17:41:19 2026] [::1]:49444 [302]: POST /login.php
-[Sat Apr 18 17:41:19 2026] [::1]:49444 Closing
-[Sat Apr 18 17:41:19 2026] [::1]:49456 Accepted
-[Sat Apr 18 17:41:19 2026] [::1]:49456 [200]: GET /index.php
-[Sat Apr 18 17:41:19 2026] [::1]:49456 Closing
-[Sat Apr 18 17:41:19 2026] [::1]:49460 Accepted
-[Sat Apr 18 17:41:19 2026] [::1]:49460 [200]: GET /settings.php
-[Sat Apr 18 17:41:19 2026] [::1]:49460 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49468 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49468 [200]: GET /pazienti.php
-[Sat Apr 18 17:41:20 2026] [::1]:49468 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49480 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49492 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49480 [200]: GET /index.php
-[Sat Apr 18 17:41:20 2026] [::1]:49480 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49508 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49492 [200]: GET /api.php?action=ranges
-[Sat Apr 18 17:41:20 2026] [::1]:49492 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49518 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49508 [200]: GET /api.php?action=tags
-[Sat Apr 18 17:41:20 2026] [::1]:49508 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49518 [200]: GET /api.php?action=pazienti
-[Sat Apr 18 17:41:20 2026] [::1]:49518 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49534 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49534 [302]: GET /login.php?action=logout
-[Sat Apr 18 17:41:20 2026] [::1]:49534 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49538 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49538 [302]: GET /index.php
-[Sat Apr 18 17:41:20 2026] [::1]:49538 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49540 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49540 [200]: GET /login.php
-[Sat Apr 18 17:41:20 2026] [::1]:49540 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49546 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49546 [302]: POST /login.php
-[Sat Apr 18 17:41:20 2026] [::1]:49546 Closing
-[Sat Apr 18 17:41:20 2026] [::1]:49556 Accepted
-[Sat Apr 18 17:41:20 2026] [::1]:49556 [200]: GET /index.php
-[Sat Apr 18 17:41:20 2026] [::1]:49556 Closing
+[Sat Apr 18 18:17:55 2026] PHP 8.3.6 Development Server (http://localhost:8080) started
+[Sat Apr 18 18:17:58 2026] [::1]:35180 Accepted
+[Sat Apr 18 18:17:58 2026] [::1]:35180 [200]: GET /login.php
+[Sat Apr 18 18:17:58 2026] [::1]:35180 Closing
+[Sat Apr 18 18:17:59 2026] [::1]:35182 Accepted
+[Sat Apr 18 18:17:59 2026] [::1]:35182 [302]: POST /login.php
+[Sat Apr 18 18:17:59 2026] [::1]:35182 Closing
+[Sat Apr 18 18:17:59 2026] [::1]:35194 Accepted
+[Sat Apr 18 18:17:59 2026] [::1]:35194 [200]: GET /index.php
+[Sat Apr 18 18:17:59 2026] [::1]:35194 Closing
+[Sat Apr 18 18:17:59 2026] [::1]:35206 Accepted
+[Sat Apr 18 18:17:59 2026] [::1]:35206 [200]: GET /pazienti.php
+[Sat Apr 18 18:17:59 2026] [::1]:35206 Closing

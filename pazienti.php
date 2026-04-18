@@ -78,6 +78,9 @@ if ($current_team_id) {
                 <button onclick="exportCSV()" class="bg-green-500 hover:bg-green-600 p-2 rounded-full text-white transition" title="Export CSV">
                     <i class="ph ph-download-simple text-xl"></i>
                 </button>
+                <a href="profile.php" class="bg-blue-700 hover:bg-blue-800 p-2 rounded-full text-white transition" title="Profilo">
+                    <i class="ph ph-user text-xl"></i>
+                </a>
                 <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
                     <i class="ph ph-sign-out text-xl"></i>
                 </a>
@@ -365,12 +368,11 @@ if ($current_team_id) {
     </div>
 
     <script>
+        const isAdmin = <?php echo isAdmin() ? 'true' : 'false'; ?>;
         const encryptionKey = sessionStorage.getItem('encryption_key');
-        if (!encryptionKey) {
+        if (!encryptionKey && !isAdmin) {
             window.location.href = 'index.php';
         }
-
-        const isAdmin = <?php echo isAdmin() ? 'true' : 'false'; ?>;
         let clinicalRanges = [];
         let tagLibrary = {};
 
@@ -561,10 +563,11 @@ if ($current_team_id) {
                             <button onclick='viewDetails(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-blue-500 hover:text-blue-700 p-1" title="Dettagli">
                                 <i class="ph ph-eye text-lg md:text-xl"></i>
                             </button>
+                            ${p.can_edit ? `
                             <button onclick='openPazienteModal(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-yellow-600 hover:text-yellow-800 p-1" title="Modifica">
                                 <i class="ph ph-pencil-line text-lg md:text-xl"></i>
-                            </button>
-                            ${isAdmin || p.can_delete ? `
+                            </button>` : ''}
+                            ${p.can_delete ? `
                             <button onclick="deletePaziente(${p.id})" class="text-red-500 hover:text-red-700 p-1" title="Elimina">
                                 <i class="ph ph-trash text-lg md:text-xl"></i>
                             </button>` : ''}
@@ -628,10 +631,11 @@ if ($current_team_id) {
                             <br><span class="text-xs text-blue-600">${i.uo_name || ''}</span>
                         </div>
                         <div class="space-x-2 flex">
+                            ${i.can_edit ? `
                             <button onclick='openInterventoModal(${JSON.stringify(i).replace(/'/g, "&apos;")})' class="text-yellow-600 p-1" title="Modifica">
                                 <i class="ph ph-pencil-line text-lg"></i>
-                            </button>
-                            ${isAdmin || i.can_delete ? `
+                            </button>` : ''}
+                            ${i.can_delete ? `
                             <button onclick="deleteIntervento(${i.id})" class="text-red-500 p-1" title="Elimina">
                                 <i class="ph ph-trash text-lg"></i>
                             </button>` : ''}
@@ -748,10 +752,11 @@ if ($current_team_id) {
                             SpO2 ${r.spo2}%, NRS ${r.nrs_dolore} ${extra}
                         </span>
                         <div class="flex items-center space-x-2 ml-2" onclick="event.stopPropagation()">
+                            ${r.can_edit ? `
                             <button onclick='openRilevazioneModal(${intervento_id}, ${JSON.stringify(r).replace(/'/g, "&apos;")})' class="text-yellow-600 p-1" title="Modifica">
                                 <i class="ph ph-pencil-line"></i>
-                            </button>
-                            ${isAdmin || r.can_delete ? `
+                            </button>` : ''}
+                            ${r.can_delete ? `
                             <button onclick="deleteRilevazione(${r.id}, ${intervento_id})" class="text-red-500 p-1" title="Elimina">
                                 <i class="ph ph-trash"></i>
                             </button>` : ''}
@@ -870,18 +875,19 @@ if ($current_team_id) {
                 `;
                 actionSpan.innerHTML = `
                     <div class="flex space-x-2">
-                        <button onclick='openEsitoModal(${intervento_id}, ${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-yellow-600" title="Modifica">
+                        \${e.can_edit ? `
+                        <button onclick='openEsitoModal(\${intervento_id}, \${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-yellow-600" title="Modifica">
                              <i class="ph ph-pencil-line"></i>
-                        </button>
-                        ${isAdmin || e.can_delete ? `
-                        <button onclick="deleteEsito(${e.id}, ${intervento_id})" class="text-red-500" title="Elimina">
+                        </button>` : ''}
+                        \${e.can_delete ? `
+                        <button onclick="deleteEsito(\${e.id}, \${intervento_id})" class="text-red-500" title="Elimina">
                              <i class="ph ph-trash"></i>
                         </button>` : ''}
                     </div>
                 `;
             } else {
                 div.innerHTML = '<span class="text-gray-400">Nessun esito registrato</span>';
-                actionSpan.innerHTML = `<button onclick="openEsitoModal(${intervento_id})" class="text-blue-500">+ Aggiungi</button>`;
+                actionSpan.innerHTML = `<button onclick="openEsitoModal(\${intervento_id})" class="text-blue-500">+ Aggiungi</button>`;
             }
         }
 

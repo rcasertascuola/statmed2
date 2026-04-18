@@ -108,8 +108,8 @@ function handlePazienti($db, $method) {
             $stmt->execute([$current_team_id]);
         }
         $pazienti = $stmt->fetchAll();
-        // Add delete permission flag for UI
         foreach ($pazienti as &$p) {
+            $p['can_edit'] = canEditPatient($db, $p['id']);
             $p['can_delete'] = canDelete($db, 'pazienti', $p['id']);
         }
         echo json_encode($pazienti);
@@ -147,7 +147,6 @@ function handleInterventi($db, $method) {
     if ($method === 'GET') {
         $paziente_id = $_GET['paziente_id'] ?? null;
         if ($paziente_id) {
-            // Assuming access to patient is already checked by the list, but we could re-check
             $stmt = $db->prepare("
                 SELECT i.*, ou.name as uo_name
                 FROM interventi i
@@ -165,6 +164,7 @@ function handleInterventi($db, $method) {
         }
         $interventi = $stmt->fetchAll();
         foreach ($interventi as &$i) {
+            $i['can_edit'] = canEditPatient($db, $i['paziente_id']);
             $i['can_delete'] = canDelete($db, 'interventi', $i['id']);
         }
         echo json_encode($interventi);
@@ -200,7 +200,7 @@ function handleRilevazioni($db, $method) {
     if ($method === 'GET') {
         $intervento_id = $_GET['intervento_id'] ?? null;
         if ($intervento_id) {
-            $stmt = $db->prepare("SELECT * FROM rilevazioni_cliniche WHERE intervento_id = ?");
+            $stmt = $db->prepare("SELECT r.*, i.paziente_id FROM rilevazioni_cliniche r JOIN interventi i ON r.intervento_id = i.id WHERE r.intervento_id = ?");
             $stmt->execute([$intervento_id]);
         } else {
             // This case might not be used in the new UI but for completeness:
@@ -208,6 +208,7 @@ function handleRilevazioni($db, $method) {
         }
         $rilevazioni = $stmt->fetchAll();
         foreach ($rilevazioni as &$r) {
+            $r['can_edit'] = canEditPatient($db, $r['paziente_id'] ?? 0);
             $r['can_delete'] = canDelete($db, 'rilevazioni_cliniche', $r['id']);
         }
         echo json_encode($rilevazioni);
@@ -240,13 +241,14 @@ function handleEsito($db, $method) {
     if ($method === 'GET') {
         $intervento_id = $_GET['intervento_id'] ?? null;
         if ($intervento_id) {
-            $stmt = $db->prepare("SELECT * FROM esito_weaning WHERE intervento_id = ?");
+            $stmt = $db->prepare("SELECT e.*, i.paziente_id FROM esito_weaning e JOIN interventi i ON e.intervento_id = i.id WHERE e.intervento_id = ?");
             $stmt->execute([$intervento_id]);
         } else {
             $stmt = $db->query("SELECT * FROM esito_weaning");
         }
         $esiti = $stmt->fetchAll();
         foreach ($esiti as &$e) {
+            $e['can_edit'] = canEditPatient($db, $e['paziente_id'] ?? 0);
             $e['can_delete'] = canDelete($db, 'esito_weaning', $e['id']);
         }
         echo json_encode($esiti);
@@ -398,7 +400,9 @@ function handleTags($db, $method) {
         echo json_encode($stmt->fetchAll());
     } elseif ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
-        $stmt = $db->prepare("INSERT IGNORE INTO tag_library (category, name) VALUES (?, ?)");
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $ignore = ($driver === 'sqlite') ? 'OR IGNORE' : 'IGNORE';
+        $stmt = $db->prepare("INSERT $ignore INTO tag_library (category, name) VALUES (?, ?)");
         $stmt->execute([$data['category'], $data['name']]);
         echo json_encode(['success' => true]);
     } elseif ($method === 'DELETE') {

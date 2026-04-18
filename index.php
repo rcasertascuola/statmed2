@@ -66,9 +66,14 @@ if (isset($_GET['change_team'])) {
         <h1 class="text-xl font-bold">StatMed2</h1>
         <div class="flex items-center gap-4">
             <span class="text-sm">Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?> <strong><?php echo $_SESSION['name']; ?></strong></span>
-            <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
-                <i class="ph ph-sign-out text-xl"></i>
-            </a>
+            <div class="flex items-center space-x-2">
+                <a href="profile.php" class="bg-blue-700 hover:bg-blue-800 p-2 rounded-full text-white transition" title="Profilo">
+                    <i class="ph ph-user text-xl"></i>
+                </a>
+                <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
+                    <i class="ph ph-sign-out text-xl"></i>
+                </a>
+            </div>
         </div>
     </nav>
 

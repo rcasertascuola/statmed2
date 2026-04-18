@@ -4,15 +4,23 @@ if (!isLoggedIn()) { header('Location: index.php'); exit; }
 
 $db = getDB();
 
+$current_team_id = $_SESSION['active_team_id'] ?? null;
+
 // Fetch all data for stats
 $sql = "SELECT p.id as paziente_id, p.nome_cognome, p.eta, p.altezza, p.peso, p.bmi,
                r.*,
                i.id as intervento_id, i.tipo_intervento, i.asa_score, i.euroscore_ii, i.durata_cec_ore, i.timing_iot_h
         FROM pazienti p
         JOIN interventi i ON p.id = i.paziente_id
-        JOIN rilevazioni_cliniche r ON i.id = r.intervento_id
-        ORDER BY r.data_ora DESC";
-$stmt = $db->query($sql);
+        JOIN rilevazioni_cliniche r ON i.id = r.intervento_id";
+
+if (!isAdmin()) {
+    $sql .= " JOIN patient_teams pt ON p.id = pt.paziente_id WHERE pt.team_id = ?";
+    $stmt = $db->prepare($sql . " ORDER BY r.data_ora DESC");
+    $stmt->execute([$current_team_id]);
+} else {
+    $stmt = $db->query($sql . " ORDER BY r.data_ora DESC");
+}
 $data = $stmt->fetchAll();
 
 // We need to decrypt names
@@ -37,9 +45,14 @@ foreach ($data as &$row) {
         <h1 class="text-xl font-bold flex items-center gap-2">
             <i class="ph ph-presentation-chart"></i> StatMed2 Analytics
         </h1>
-        <a href="index.php" class="bg-white text-purple-700 px-4 py-1 rounded-full font-bold text-sm hover:bg-purple-50 transition">
-            Dashboard
-        </a>
+        <div class="flex items-center space-x-2">
+            <a href="index.php" class="bg-white text-purple-700 px-4 py-1 rounded-full font-bold text-sm hover:bg-purple-50 transition">
+                Dashboard
+            </a>
+            <a href="profile.php" class="bg-purple-800 hover:bg-purple-900 p-2 rounded-full text-white transition" title="Profilo">
+                <i class="ph ph-user text-xl"></i>
+            </a>
+        </div>
     </nav>
 
     <main class="container mx-auto p-4 md:p-6">
