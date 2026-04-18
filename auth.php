@@ -2,45 +2,65 @@
 session_start();
 require_once 'config.php';
 
-function login($username, $password, $encryption_key) {
+function login($username, $password) {
     $db = getDB();
     $stmt = $db->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->execute([$username]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['password_hash'])) {
-        // Verify encryption key hash
-        $stmt = $db->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'encryption_key_hash'");
-        $stmt->execute();
-        $stored_hash = $stmt->fetchColumn();
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['name'] = !empty($user['name']) ? $user['name'] : $user['username'];
+        $_SESSION['sex'] = $user['sex'] ?? 'M';
+        $_SESSION['role'] = $user['role'];
 
-        $provided_key_hash = hash('sha256', $encryption_key);
+        // Log login
+        $stmt = $db->prepare("INSERT INTO activity_logs (user_id, action, details) VALUES (?, 'LOGIN', 'Utente ha effettuato l''accesso')");
+        $stmt->execute([$user['id']]);
 
-        if (!$stored_hash) {
-            // First time setup: store the hash
-            $stmt = $db->prepare("INSERT INTO app_settings (setting_key, setting_value) VALUES ('encryption_key_hash', ?)");
-            $stmt->execute([$provided_key_hash]);
-            $stored_hash = $provided_key_hash;
+        // If team leader, try to decrypt team key
+        $stmt = $db->prepare("SELECT id, encrypted_team_key FROM teams WHERE leader_id = ?");
+        $stmt->execute([$user['id']]);
+        $managed_teams = $stmt->fetchAll();
+
+        $_SESSION['managed_teams'] = [];
+        foreach ($managed_teams as $team) {
+            if ($team['encrypted_team_key']) {
+                $decrypted_key = decryptWithPassword($team['encrypted_team_key'], $password);
+                if ($decrypted_key) {
+                    $_SESSION['managed_teams'][$team['id']] = $decrypted_key;
+                }
+            }
         }
 
-        if ($provided_key_hash === $stored_hash) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['name'] = !empty($user['name']) ? $user['name'] : $user['username'];
-            $_SESSION['sex'] = $user['sex'] ?? 'M';
-            $_SESSION['role'] = $user['role'];
-
-            // Log login
-            $stmt = $db->prepare("INSERT INTO activity_logs (user_id, action, details) VALUES (?, 'LOGIN', 'Utente ha effettuato l''accesso')");
-            $stmt->execute([$user['id']]);
-
-            // We do NOT store the encryption key in the session server-side
-            // as it should stay client-side for "true" client-side encryption.
-            // But we can return success.
-            return true;
-        }
+        return true;
     }
     return false;
+}
+
+function decryptWithPassword($encrypted_data, $password) {
+    // Simple symmetric decryption using password as key
+    // In a real scenario, we'd use a more robust method, but for this PHP environment:
+    $data = base64_decode($encrypted_data);
+    if (!$data) return false;
+
+    $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+    $iv = substr($data, 0, $iv_length);
+    $ciphertext = substr($data, $iv_length);
+
+    $key = hash('sha256', $password, true);
+    return openssl_decrypt($ciphertext, 'aes-256-cbc', $key, 0, $iv);
+}
+
+function encryptWithPassword($data, $password) {
+    $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+    $iv = openssl_random_pseudo_bytes($iv_length);
+
+    $key = hash('sha256', $password, true);
+    $ciphertext = openssl_encrypt($data, 'aes-256-cbc', $key, 0, $iv);
+
+    return base64_encode($iv . $ciphertext);
 }
 
 function isLoggedIn() {
@@ -53,5 +73,17 @@ function isAdmin() {
 
 function logout() {
     session_destroy();
+}
+
+function getUserTeams($userId) {
+    $db = getDB();
+    $stmt = $db->prepare("
+        SELECT t.*, ut.can_edit_all
+        FROM teams t
+        JOIN user_teams ut ON t.id = ut.team_id
+        WHERE ut.user_id = ?
+    ");
+    $stmt->execute([$userId]);
+    return $stmt->fetchAll();
 }
 ?>
