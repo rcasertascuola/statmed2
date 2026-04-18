@@ -701,7 +701,7 @@ if (!isLoggedIn()): ?>
 
                 // Trigger validation for existing values
                 ['fr', 'tv', 'tobin_index', 'spo2', 'fio2', 'rox_index', 'peep', 'pressure_support', 'nrs_dolore', 'nas_score'].forEach(p => {
-                    const input = document.getElementById('r_' + (p === 'tobin_index' ? 'tobin' : (p === 'rox_index' ? 'rox' : (p === 'pressure_support' ? 'ps' : (p === 'nrs_dolore' ? 'dolore' : p)))));
+                    const input = document.getElementById('r_' + (p === 'tobin_index' ? 'tobin' : (p === 'rox_index' ? 'rox' : (p === 'pressure_support' ? 'ps' : (p === 'nrs_dolore' ? 'dolore' : (p === 'nas_score' ? 'nas' : p))))));
                     if (input) validateParam(p, input);
                 });
             }
