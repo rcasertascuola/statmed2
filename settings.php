@@ -198,9 +198,12 @@ if (!isAdmin()) { header('Location: index.php'); exit; }
                     <div class="flex flex-wrap gap-2">
                         ${catTags.map(t => `
                             <span class="bg-white border px-2 py-1 rounded text-xs flex items-center gap-1">
-                                ${t.name}
-                                <button onclick="deleteTag(${t.id})" class="text-red-500 hover:text-red-700">
-                                    <i class="ph ph-x-circle"></i>
+                                <span id="tag-text-${t.id}">${t.name}</span>
+                                <button onclick="renameTagPrompt(${t.id}, '${t.name.replace(/'/g, "\\'")}', '${cat}')" class="text-blue-500 hover:text-blue-700 ml-1" title="Rinomina/Unisci">
+                                    <i class="ph ph-pencil-simple"></i>
+                                </button>
+                                <button onclick="deleteTag(${t.id})" class="text-red-400 hover:text-red-600">
+                                    <i class="ph ph-trash"></i>
                                 </button>
                             </span>
                         `).join('')}
@@ -228,6 +231,24 @@ if (!isAdmin()) { header('Location: index.php'); exit; }
             if (confirm('Eliminare questo tag?')) {
                 await fetch(`api.php?action=tags&id=${id}`, { method: 'DELETE' });
                 loadTags();
+            }
+        }
+
+        async function renameTagPrompt(id, oldName, category) {
+            const newName = prompt(`Rinomina o unisci il tag "${oldName}":`, oldName);
+            if (!newName || newName === oldName) return;
+
+            const res = await fetch('api.php?action=rename_tag', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_name: oldName, new_name: newName, category: category })
+            });
+
+            if (res.ok) {
+                alert('Tag aggiornato e record clinici allineati!');
+                loadTags();
+            } else {
+                alert('Errore durante l\'aggiornamento.');
             }
         }
 
