@@ -205,31 +205,35 @@ if (!isLoggedIn()): ?>
                 <input type="hidden" id="i_paziente_id">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Comorbidità</label>
-                    <textarea id="i_comorbilita" class="w-full p-2 border rounded"></textarea>
+                    <div id="i_comorbilita_tags" class="flex flex-wrap gap-1 mb-1"></div>
+                    <input type="text" id="i_comorbilita_input" placeholder="Aggiungi comorbidità..." class="w-full p-2 border rounded text-sm mb-1" onkeydown="handleTagInput(event, 'comorbilita', 'i_comorbilita')">
+                    <textarea id="i_comorbilita" class="hidden"></textarea>
+                    <div id="i_comorbilita_suggestions" class="flex flex-wrap gap-1"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">ASA Score</label>
-                    <input type="number" min="1" max="5" id="i_asa" class="w-full p-2 border rounded">
+                    <input type="number" inputmode="numeric" min="1" max="5" id="i_asa" oninput="validateParam('asa_score', this)" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Tipo Intervento</label>
-                    <input type="text" id="i_tipo" class="w-full p-2 border rounded">
+                    <input type="text" id="i_tipo" list="tipo_intervento_list" onchange="addTagToField('tipo_intervento', this.value, 'i_tipo')" class="w-full p-2 border rounded">
+                    <datalist id="tipo_intervento_list"></datalist>
                 </div>
                 <div class="flex items-center">
                     <input type="checkbox" id="i_urgenza" class="mr-2">
                     <label class="text-sm font-medium text-gray-700">Urgenza</label>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Euroscore II</label>
-                    <input type="number" step="0.01" min="0" id="i_euroscore" class="w-full p-2 border rounded">
+                    <label class="block text-sm font-medium text-gray-700">Euroscore II (%)</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" id="i_euroscore" oninput="validateParam('euroscore_ii', this)" class="w-full p-2 border rounded">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Durata CEC (ore)</label>
-                    <input type="number" step="0.1" min="0" id="i_cec" class="w-full p-2 border rounded">
+                    <label class="block text-sm font-medium text-gray-700">Durata CEC (h)</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="i_cec" oninput="validateParam('durata_cec_ore', this)" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Timing IOT (h)</label>
-                    <input type="number" step="0.1" min="0" id="i_iot" class="w-full p-2 border rounded">
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="i_iot" oninput="validateParam('timing_iot_h', this)" class="w-full p-2 border rounded">
                 </div>
                 <div class="md:col-span-2 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('interventoModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -324,15 +328,18 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="block text-xs font-bold text-gray-500 uppercase">M. Venturi</label>
-                    <input type="text" id="r_venturi" placeholder="%-L\min" class="w-full p-3 border rounded-lg shadow-sm">
+                    <input type="text" id="r_venturi" list="maschera_venturi_list" class="w-full p-3 border rounded-lg shadow-sm">
+                    <datalist id="maschera_venturi_list"></datalist>
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="block text-xs font-bold text-gray-500 uppercase">HFNO</label>
-                    <input type="text" id="r_hfno" placeholder="%-L/min" class="w-full p-3 border rounded-lg shadow-sm">
+                    <input type="text" id="r_hfno" list="hfno_list" class="w-full p-3 border rounded-lg shadow-sm">
+                    <datalist id="hfno_list"></datalist>
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="block text-xs font-bold text-gray-500 uppercase">NIV</label>
-                    <input type="text" id="r_niv" placeholder="PEEP-Ps" class="w-full p-3 border rounded-lg shadow-sm">
+                    <input type="text" id="r_niv" list="niv_list" class="w-full p-3 border rounded-lg shadow-sm">
+                    <datalist id="niv_list"></datalist>
                 </div>
                 <div class="col-span-2 md:col-span-3 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('rilevazioneModal')" class="flex-1 md:flex-none bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg">Annulla</button>
@@ -355,19 +362,16 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Tipo Post-Estubazione</label>
-                    <select id="e_tipo" class="w-full p-2 border rounded">
-                        <option value="Ossigeno standard">Ossigeno standard</option>
-                        <option value="HFNO">HFNO</option>
-                        <option value="NIV">NIV</option>
-                    </select>
+                    <input type="text" id="e_tipo" list="tipo_post_estubazione_list" class="w-full p-2 border rounded">
+                    <datalist id="tipo_post_estubazione_list"></datalist>
                 </div>
                 <div class="flex items-center">
                     <input type="checkbox" id="e_fallimento" class="mr-2">
                     <label class="text-sm font-medium text-gray-700">Fallimento IOT</label>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Ore da estubazione a failure</label>
-                    <input type="number" step="0.1" min="0" id="e_ore" class="w-full p-2 border rounded">
+                    <label class="block text-sm font-medium text-gray-700">Ore a failure (h)</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="e_ore" oninput="validateParam('ore_da_estubazione_a_failure', this)" class="w-full p-2 border rounded">
                 </div>
                 <div class="md:col-span-2 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('esitoModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -385,12 +389,95 @@ if (!isLoggedIn()): ?>
 
         const isAdmin = <?php echo isAdmin() ? 'true' : 'false'; ?>;
         let clinicalRanges = [];
+        let tagLibrary = {};
 
         async function loadRanges() {
             const res = await fetch('api.php?action=ranges');
             clinicalRanges = await res.json();
         }
+
+        async function loadTagLibrary() {
+            const res = await fetch('api.php?action=tags');
+            const tags = await res.json();
+            tagLibrary = tags.reduce((acc, t) => {
+                acc[t.category] = acc[t.category] || [];
+                acc[t.category].push(t.name);
+                return acc;
+            }, {});
+
+            // Populate datalists
+            for (const [cat, names] of Object.entries(tagLibrary)) {
+                const dl = document.getElementById(cat + '_list');
+                if (dl) {
+                    dl.innerHTML = names.map(n => `<option value="${n}">`).join('');
+                }
+            }
+        }
         loadRanges();
+        loadTagLibrary();
+
+        function handleTagInput(e, category, targetId) {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                const val = e.target.value.trim().replace(',', '');
+                if (val) addTagToField(category, val, targetId);
+                e.target.value = '';
+            }
+        }
+
+        async function addTagToField(category, name, targetId) {
+            const target = document.getElementById(targetId);
+            const current = target.value ? target.value.split(',').map(s => s.trim()) : [];
+            if (!current.includes(name)) {
+                current.push(name);
+                target.value = current.join(', ');
+                renderTags(category, targetId);
+
+                // Save to library if new
+                if (!tagLibrary[category] || !tagLibrary[category].includes(name)) {
+                    await fetch('api.php?action=tags', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ category, name })
+                    });
+                    loadTagLibrary();
+                }
+            }
+        }
+
+        function removeTagFromField(category, name, targetId) {
+            const target = document.getElementById(targetId);
+            const current = target.value.split(',').map(s => s.trim()).filter(s => s !== name);
+            target.value = current.join(', ');
+            renderTags(category, targetId);
+        }
+
+        function renderTags(category, targetId) {
+            const target = document.getElementById(targetId);
+            const container = document.getElementById(targetId + '_tags');
+            const suggContainer = document.getElementById(targetId + '_suggestions');
+            if (!container) return;
+
+            const current = target.value ? target.value.split(',').map(s => s.trim()) : [];
+            container.innerHTML = current.map(t => `
+                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                    ${t}
+                    <button type="button" onclick="removeTagFromField('${category}', '${t}', '${targetId}')" class="text-blue-500 hover:text-blue-700">
+                        <i class="ph ph-x-circle"></i>
+                    </button>
+                </span>
+            `).join('');
+
+            // Show suggestions from library not already in current
+            if (suggContainer && tagLibrary[category]) {
+                const suggestions = tagLibrary[category].filter(t => !current.includes(t));
+                suggContainer.innerHTML = suggestions.map(t => `
+                    <button type="button" onclick="addTagToField('${category}', '${t}', '${targetId}')" class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] hover:bg-gray-200">
+                        + ${t}
+                    </button>
+                `).join('');
+            }
+        }
 
         function validateParam(param, input) {
             const val = parseFloat(input.value);
@@ -587,23 +674,37 @@ if (!isLoggedIn()): ?>
 
         async function openInterventoModal(intervento = null) {
             document.getElementById('interventoForm').reset();
+            document.querySelectorAll('#interventoForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
             document.getElementById('i_id').value = '';
             document.getElementById('i_paziente_id').value = currentPazienteId;
             if (intervento) {
                 document.getElementById('i_id').value = intervento.id;
-                document.getElementById('i_comorbilita').value = intervento.comorbilita;
+                document.getElementById('i_comorbilita').value = intervento.comorbilita || '';
                 document.getElementById('i_asa').value = intervento.asa_score;
                 document.getElementById('i_tipo').value = intervento.tipo_intervento;
                 document.getElementById('i_urgenza').checked = intervento.urgenza == 1;
                 document.getElementById('i_euroscore').value = intervento.euroscore_ii;
                 document.getElementById('i_cec').value = intervento.durata_cec_ore;
                 document.getElementById('i_iot').value = intervento.timing_iot_h;
+
+                // Validate
+                ['asa_score', 'euroscore_ii', 'durata_cec_ore', 'timing_iot_h'].forEach(p => {
+                    const idMap = { 'asa_score': 'i_asa', 'euroscore_ii': 'i_euroscore', 'durata_cec_ore': 'i_cec', 'timing_iot_h': 'i_iot' };
+                    const input = document.getElementById(idMap[p]);
+                    if (input) validateParam(p, input);
+                });
             }
+            renderTags('comorbilita', 'i_comorbilita');
             openModal('interventoModal');
         }
 
         async function saveIntervento(e) {
             e.preventDefault();
+
+            if (document.querySelectorAll('#interventoForm .range-critical').length > 0) {
+                if (!confirm("Attenzione: alcuni parametri sono fuori dai range critici. Procedere?")) return;
+            }
+
             const data = {
                 id: document.getElementById('i_id').value,
                 paziente_id: document.getElementById('i_paziente_id').value,
@@ -704,6 +805,13 @@ if (!isLoggedIn()): ?>
                     const input = document.getElementById('r_' + (p === 'tobin_index' ? 'tobin' : (p === 'rox_index' ? 'rox' : (p === 'pressure_support' ? 'ps' : (p === 'nrs_dolore' ? 'dolore' : (p === 'nas_score' ? 'nas' : p))))));
                     if (input) validateParam(p, input);
                 });
+                renderTags('maschera_venturi', 'r_venturi');
+                renderTags('hfno', 'r_hfno');
+                renderTags('niv', 'r_niv');
+            } else {
+                renderTags('maschera_venturi', 'r_venturi');
+                renderTags('hfno', 'r_hfno');
+                renderTags('niv', 'r_niv');
             }
             openModal('rilevazioneModal');
         }
@@ -787,20 +895,30 @@ if (!isLoggedIn()): ?>
 
         function openEsitoModal(intervento_id, e = null) {
             document.getElementById('esitoForm').reset();
+            document.querySelectorAll('#esitoForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
             document.getElementById('e_intervento_id').value = intervento_id;
             document.getElementById('e_id').value = '';
             if (e) {
                 document.getElementById('e_id').value = e.id;
                 document.getElementById('e_successo').checked = e.successo == 1;
-                document.getElementById('e_tipo').value = e.tipo_post_estubazione;
+                document.getElementById('e_tipo').value = e.tipo_post_estubazione || '';
                 document.getElementById('e_fallimento').checked = e.fallimento_iot == 1;
                 document.getElementById('e_ore').value = e.ore_da_estubazione_a_failure;
+
+                const input = document.getElementById('e_ore');
+                if (input) validateParam('ore_da_estubazione_a_failure', input);
             }
+            renderTags('tipo_post_estubazione', 'e_tipo');
             openModal('esitoModal');
         }
 
         async function saveEsito(e) {
             e.preventDefault();
+
+            if (document.querySelectorAll('#esitoForm .range-critical').length > 0) {
+                if (!confirm("Attenzione: parametri critici. Procedere?")) return;
+            }
+
             const int_id = document.getElementById('e_intervento_id').value;
             const data = {
                 id: document.getElementById('e_id').value,
