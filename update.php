@@ -44,6 +44,18 @@ try {
     addColumnIfNotExists($db, 'rilevazioni_cliniche', 'niv', "TEXT");
     addColumnIfNotExists($db, 'rilevazioni_cliniche', 'data_ora', "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
+    // 5. Create clinical_ranges table
+    $db->exec("CREATE TABLE IF NOT EXISTS clinical_ranges (
+        parameter VARCHAR(50) PRIMARY KEY,
+        min_normal REAL,
+        max_normal REAL,
+        min_critical REAL,
+        max_critical REAL,
+        step REAL DEFAULT 0.1,
+        unit VARCHAR(20)
+    )");
+    echo "Tabella clinical_ranges verificata/creata.<br>";
+
     echo "<br><strong>Aggiornamento completato con successo!</strong>";
 
 } catch (Exception $e) {
