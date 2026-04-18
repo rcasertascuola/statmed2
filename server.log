@@ -1,0 +1,129 @@
+[Sat Apr 18 16:56:53 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
+[Sat Apr 18 16:56:55 2026] [::1]:38346 Accepted
+[Sat Apr 18 16:56:55 2026] [::1]:38346 [200]: HEAD /index.php
+[Sat Apr 18 16:56:55 2026] [::1]:38346 Closing
+[Sat Apr 18 16:57:56 2026] [::1]:47012 Accepted
+[Sat Apr 18 16:57:56 2026] [::1]:47012 [200]: GET /index.php
+[Sat Apr 18 16:57:56 2026] [::1]:47012 Closing
+[Sat Apr 18 16:57:57 2026] [::1]:47020 Accepted
+[Sat Apr 18 16:57:57 2026] [::1]:47020 [302]: POST /index.php
+[Sat Apr 18 16:57:57 2026] [::1]:47020 Closing
+[Sat Apr 18 16:57:57 2026] [::1]:47034 Accepted
+[Sat Apr 18 16:57:57 2026] [::1]:47034 [200]: GET /index.php
+[Sat Apr 18 16:57:57 2026] [::1]:47034 Closing
+[Sat Apr 18 16:57:58 2026] [::1]:47036 Accepted
+[Sat Apr 18 16:57:58 2026] [::1]:47036 [200]: GET /api.php?action=ranges
+[Sat Apr 18 16:57:58 2026] [::1]:47036 Closing
+[Sat Apr 18 16:57:58 2026] [::1]:47046 Accepted
+[Sat Apr 18 16:57:58 2026] [::1]:47056 Accepted
+[Sat Apr 18 16:57:58 2026] [::1]:47046 [200]: GET /api.php?action=tags
+[Sat Apr 18 16:57:58 2026] [::1]:47046 Closing
+[Sat Apr 18 16:57:58 2026] [::1]:47056 [200]: GET /api.php?action=pazienti
+[Sat Apr 18 16:57:58 2026] [::1]:47056 Closing
+[Sat Apr 18 16:57:58 2026] [::1]:47058 Accepted
+[Sat Apr 18 16:57:58 2026] [::1]:47058 [200]: GET /settings.php
+[Sat Apr 18 16:57:58 2026] [::1]:47058 Closing
+[Sat Apr 18 16:57:58 2026] [::1]:47068 Accepted
+[Sat Apr 18 16:57:58 2026] [::1]:47068 [200]: GET /api.php?action=ranges
+[Sat Apr 18 16:57:58 2026] [::1]:47068 Closing
+[Sat Apr 18 16:57:58 2026] [::1]:47078 Accepted
+[Sat Apr 18 16:57:58 2026] [::1]:47078 [200]: GET /api.php?action=tags
+[Sat Apr 18 16:57:58 2026] [::1]:47078 Closing
+[Sat Apr 18 16:58:00 2026] [::1]:47086 Accepted
+[Sat Apr 18 16:58:00 2026] [::1]:47086 [200]: GET /index.php
+[Sat Apr 18 16:58:00 2026] [::1]:47086 Closing
+[Sat Apr 18 16:58:00 2026] [::1]:47102 Accepted
+[Sat Apr 18 16:58:00 2026] [::1]:47118 Accepted
+[Sat Apr 18 16:58:00 2026] [::1]:47102 [200]: GET /api.php?action=ranges
+[Sat Apr 18 16:58:00 2026] [::1]:47102 Closing
+[Sat Apr 18 16:58:00 2026] [::1]:47128 Accepted
+[Sat Apr 18 16:58:00 2026] [::1]:47118 [200]: GET /api.php?action=tags
+[Sat Apr 18 16:58:00 2026] [::1]:47118 Closing
+[Sat Apr 18 16:58:00 2026] [::1]:47128 [200]: GET /api.php?action=pazienti
+[Sat Apr 18 16:58:00 2026] [::1]:47128 Closing
+[Sat Apr 18 16:58:00 2026] [::1]:47136 Accepted
+[Sat Apr 18 16:58:00 2026] [::1]:47136 [200]: POST /api.php?action=pazienti
+[Sat Apr 18 16:58:00 2026] [::1]:47136 Closing
+[Sat Apr 18 16:58:00 2026] [::1]:47150 Accepted
+[Sat Apr 18 16:58:00 2026] [::1]:47150 [200]: GET /api.php?action=pazienti
+[Sat Apr 18 16:58:00 2026] [::1]:47150 Closing
+[Sat Apr 18 16:58:01 2026] [::1]:42194 Accepted
+[Sat Apr 18 16:58:01 2026] [::1]:42194 [200]: GET /api.php?action=interventi&paziente_id=1
+[Sat Apr 18 16:58:01 2026] [::1]:42194 Closing
+[Sat Apr 18 16:58:01 2026] [::1]:42198 Accepted
+[Sat Apr 18 16:58:01 2026] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000]: General error: 1 near "IGNORE": syntax error in /app/api.php:293
+Stack trace:
+#0 /app/api.php(293): PDO->prepare()
+#1 /app/api.php(41): handleTags()
+#2 {main}
+  thrown in /app/api.php on line 293
+[Sat Apr 18 16:58:01 2026] [::1]:42198 [500]: POST /api.php?action=tags - Uncaught PDOException: SQLSTATE[HY000]: General error: 1 near "IGNORE": syntax error in /app/api.php:293
+Stack trace:
+#0 /app/api.php(293): PDO->prepare()
+#1 /app/api.php(41): handleTags()
+#2 {main}
+  thrown in /app/api.php on line 293
+[Sat Apr 18 16:58:01 2026] [::1]:42198 Closing
+[Sat Apr 18 16:58:01 2026] [::1]:42210 Accepted
+[Sat Apr 18 16:58:01 2026] [::1]:42210 [200]: GET /api.php?action=tags
+[Sat Apr 18 16:58:01 2026] [::1]:42210 Closing
+[Sat Apr 18 16:58:01 2026] [::1]:42224 Accepted
+[Sat Apr 18 16:58:01 2026] [::1]:42224 [200]: POST /api.php?action=interventi
+[Sat Apr 18 16:58:01 2026] [::1]:42224 Closing
+[Sat Apr 18 16:58:01 2026] [::1]:42234 Accepted
+[Sat Apr 18 16:58:01 2026] [::1]:42234 [200]: GET /api.php?action=interventi&paziente_id=1
+[Sat Apr 18 16:58:01 2026] [::1]:42234 Closing
+[Sat Apr 18 16:58:01 2026] [::1]:42238 Accepted
+[Sat Apr 18 16:58:01 2026] [::1]:42242 Accepted
+[Sat Apr 18 16:58:01 2026] [::1]:42238 [200]: GET /api.php?action=rilevazioni&intervento_id=1
+[Sat Apr 18 16:58:01 2026] [::1]:42238 Closing
+[Sat Apr 18 16:58:01 2026] [::1]:42242 [200]: GET /api.php?action=esito&intervento_id=1
+[Sat Apr 18 16:58:01 2026] [::1]:42242 Closing
+[Sat Apr 18 16:58:53 2026] [::1]:55740 Accepted
+[Sat Apr 18 16:58:53 2026] [::1]:55740 [200]: GET /index.php
+[Sat Apr 18 16:58:53 2026] [::1]:55740 Closing
+[Sat Apr 18 16:58:53 2026] [::1]:55754 Accepted
+[Sat Apr 18 16:58:53 2026] [::1]:55754 [302]: POST /index.php
+[Sat Apr 18 16:58:53 2026] [::1]:55754 Closing
+[Sat Apr 18 16:58:53 2026] [::1]:55762 Accepted
+[Sat Apr 18 16:58:53 2026] [::1]:55762 [200]: GET /index.php
+[Sat Apr 18 16:58:53 2026] [::1]:55762 Closing
+[Sat Apr 18 16:58:54 2026] [::1]:55772 Accepted
+[Sat Apr 18 16:58:54 2026] [::1]:55784 Accepted
+[Sat Apr 18 16:58:54 2026] [::1]:55794 Accepted
+[Sat Apr 18 16:58:54 2026] [::1]:55772 [200]: GET /api.php?action=ranges
+[Sat Apr 18 16:58:54 2026] [::1]:55772 Closing
+[Sat Apr 18 16:58:54 2026] [::1]:55784 [200]: GET /api.php?action=tags
+[Sat Apr 18 16:58:54 2026] [::1]:55784 Closing
+[Sat Apr 18 16:58:54 2026] [::1]:55794 [200]: GET /api.php?action=pazienti
+[Sat Apr 18 16:58:54 2026] [::1]:55794 Closing
+[Sat Apr 18 16:58:54 2026] [::1]:55810 Accepted
+[Sat Apr 18 16:58:54 2026] [::1]:55810 [200]: GET /settings.php
+[Sat Apr 18 16:58:54 2026] [::1]:55810 Closing
+[Sat Apr 18 16:58:54 2026] [::1]:55822 Accepted
+[Sat Apr 18 16:58:54 2026] [::1]:55822 [200]: GET /api.php?action=ranges
+[Sat Apr 18 16:58:54 2026] [::1]:55822 Closing
+[Sat Apr 18 16:58:54 2026] [::1]:55828 Accepted
+[Sat Apr 18 16:58:54 2026] [::1]:55828 [200]: GET /api.php?action=tags
+[Sat Apr 18 16:58:54 2026] [::1]:55828 Closing
+[Sat Apr 18 16:58:55 2026] [::1]:55830 Accepted
+[Sat Apr 18 16:58:55 2026] [::1]:55830 [200]: GET /index.php
+[Sat Apr 18 16:58:55 2026] [::1]:55830 Closing
+[Sat Apr 18 16:58:55 2026] [::1]:55838 Accepted
+[Sat Apr 18 16:58:55 2026] [::1]:55842 Accepted
+[Sat Apr 18 16:58:55 2026] [::1]:55854 Accepted
+[Sat Apr 18 16:58:55 2026] [::1]:55838 [200]: GET /api.php?action=ranges
+[Sat Apr 18 16:58:55 2026] [::1]:55838 Closing
+[Sat Apr 18 16:58:55 2026] [::1]:55842 [200]: GET /api.php?action=tags
+[Sat Apr 18 16:58:55 2026] [::1]:55842 Closing
+[Sat Apr 18 16:58:55 2026] [::1]:55854 [200]: GET /api.php?action=pazienti
+[Sat Apr 18 16:58:55 2026] [::1]:55854 Closing
+[Sat Apr 18 16:58:55 2026] [::1]:55860 Accepted
+[Sat Apr 18 16:58:55 2026] [::1]:55860 [200]: GET /api.php?action=interventi&paziente_id=1
+[Sat Apr 18 16:58:55 2026] [::1]:55860 Closing
+[Sat Apr 18 16:58:55 2026] [::1]:55864 Accepted
+[Sat Apr 18 16:58:55 2026] [::1]:55870 Accepted
+[Sat Apr 18 16:58:55 2026] [::1]:55864 [200]: GET /api.php?action=rilevazioni&intervento_id=1
+[Sat Apr 18 16:58:55 2026] [::1]:55864 Closing
+[Sat Apr 18 16:58:55 2026] [::1]:55870 [200]: GET /api.php?action=esito&intervento_id=1
+[Sat Apr 18 16:58:55 2026] [::1]:55870 Closing
