@@ -40,8 +40,6 @@ function login($username, $password) {
 }
 
 function decryptWithPassword($encrypted_data, $password) {
-    // Simple symmetric decryption using password as key
-    // In a real scenario, we'd use a more robust method, but for this PHP environment:
     $data = base64_decode($encrypted_data);
     if (!$data) return false;
 
@@ -82,12 +80,16 @@ function logout() {
 function getUserTeams($userId) {
     $db = getDB();
     $stmt = $db->prepare("
+        SELECT t.*, 1 as can_edit_all
+        FROM teams t
+        WHERE t.leader_id = ?
+        UNION
         SELECT t.*, ut.can_edit_all
         FROM teams t
         JOIN user_teams ut ON t.id = ut.team_id
         WHERE ut.user_id = ?
     ");
-    $stmt->execute([$userId]);
+    $stmt->execute([$userId, $userId]);
     return $stmt->fetchAll();
 }
 ?>

@@ -1,8 +1,8 @@
 <?php
 require_once 'auth.php';
 
-if (!isLoggedIn() || isAdmin()) {
-    header('Location: index.php');
+if (!isLoggedIn()) {
+    header('Location: login.php');
     exit;
 }
 
@@ -42,7 +42,7 @@ if ($current_team_id) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <!-- Tesseract.js for OCR -->
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-    <!-- Heroicons for better UI -->
+    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
@@ -247,7 +247,6 @@ if ($current_team_id) {
                 </div>
             </div>
 
-            <!-- OCR Progress -->
             <div id="ocr-status" class="hidden mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700 animate-pulse">
                 <span id="ocr-message">Elaborazione immagine...</span>
             </div>
@@ -328,8 +327,8 @@ if ($current_team_id) {
                     <datalist id="niv_list"></datalist>
                 </div>
                 <div class="col-span-2 md:col-span-3 flex justify-end space-x-2 mt-4">
-                    <button type="button" onclick="closeModal('rilevazioneModal')" class="flex-1 md:flex-none bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg">Annulla</button>
-                    <button type="submit" class="flex-1 md:flex-none bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg">Salva</button>
+                    <button type="button" onclick="closeModal('rilevazioneModal')" class="bg-gray-200 px-6 py-3 rounded-lg">Annulla</button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">Salva</button>
                 </div>
             </form>
         </div>
@@ -384,17 +383,16 @@ if ($current_team_id) {
         async function loadTagLibrary() {
             const res = await fetch('api.php?action=tags');
             const tags = await res.json();
-            tagLibrary = tags.reduce((acc, t) => {
+            tagLibrary = tags.reduce(function(acc, t) {
                 acc[t.category] = acc[t.category] || [];
                 acc[t.category].push(t.name);
                 return acc;
             }, {});
 
-            // Populate datalists
-            for (const [cat, names] of Object.entries(tagLibrary)) {
+            for (const cat in tagLibrary) {
                 const dl = document.getElementById(cat + '_list');
                 if (dl) {
-                    dl.innerHTML = names.map(n => `<option value="${n}">`).join('');
+                    dl.innerHTML = tagLibrary[cat].map(function(n) { return '<option value="' + n + '">'; }).join('');
                 }
             }
         }
@@ -412,18 +410,17 @@ if ($current_team_id) {
 
         async function addTagToField(category, name, targetId) {
             const target = document.getElementById(targetId);
-            const current = target.value ? target.value.split(',').map(s => s.trim()) : [];
+            const current = target.value ? target.value.split(',').map(function(s) { return s.trim(); }) : [];
             if (!current.includes(name)) {
                 current.push(name);
                 target.value = current.join(', ');
                 renderTags(category, targetId);
 
-                // Save to library if new
                 if (!tagLibrary[category] || !tagLibrary[category].includes(name)) {
                     await fetch('api.php?action=tags', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ category, name })
+                        body: JSON.stringify({ category: category, name: name })
                     });
                     loadTagLibrary();
                 }
@@ -432,7 +429,7 @@ if ($current_team_id) {
 
         function removeTagFromField(category, name, targetId) {
             const target = document.getElementById(targetId);
-            const current = target.value.split(',').map(s => s.trim()).filter(s => s !== name);
+            const current = target.value.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s !== name; });
             target.value = current.join(', ');
             renderTags(category, targetId);
         }
@@ -443,30 +440,29 @@ if ($current_team_id) {
             const suggContainer = document.getElementById(targetId + '_suggestions');
             if (!container) return;
 
-            const current = target.value ? target.value.split(',').map(s => s.trim()) : [];
-            container.innerHTML = current.map(t => `
-                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                    ${t}
-                    <button type="button" onclick="removeTagFromField('${category}', '${t}', '${targetId}')" class="text-blue-500 hover:text-blue-700">
-                        <i class="ph ph-x-circle"></i>
-                    </button>
-                </span>
-            `).join('');
+            const current = target.value ? target.value.split(',').map(function(s) { return s.trim(); }) : [];
+            container.innerHTML = current.map(function(t) {
+                return '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">' +
+                    t +
+                    '<button type="button" onclick="removeTagFromField(\'' + category + '\', \'' + t + '\', \'' + targetId + '\')" class="text-blue-500 hover:text-blue-700">' +
+                        '<i class="ph ph-x-circle"></i>' +
+                    '</button>' +
+                '</span>';
+            }).join('');
 
-            // Show suggestions from library not already in current
             if (suggContainer && tagLibrary[category]) {
-                const suggestions = tagLibrary[category].filter(t => !current.includes(t));
-                suggContainer.innerHTML = suggestions.map(t => `
-                    <button type="button" onclick="addTagToField('${category}', '${t}', '${targetId}')" class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] hover:bg-gray-200">
-                        + ${t}
-                    </button>
-                `).join('');
+                const suggestions = tagLibrary[category].filter(function(t) { return !current.includes(t); });
+                suggContainer.innerHTML = suggestions.map(function(t) {
+                    return '<button type="button" onclick="addTagToField(\'' + category + '\', \'' + t + '\', \'' + targetId + '\')" class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] hover:bg-gray-200">' +
+                        '+ ' + t +
+                    '</button>';
+                }).join('');
             }
         }
 
         function validateParam(param, input) {
             const val = parseFloat(input.value);
-            const range = clinicalRanges.find(r => r.parameter === param);
+            const range = clinicalRanges.find(function(r) { return r.parameter === param; });
             input.classList.remove('range-ok', 'range-warning', 'range-critical');
             if (isNaN(val) || !range) return;
             if (val >= range.min_normal && val <= range.max_normal) {
@@ -524,9 +520,9 @@ if ($current_team_id) {
         function openModal(id) { document.getElementById(id).style.display = 'block'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        function openPazienteModal(paziente = null) {
+        function openPazienteModal(paziente) {
             document.getElementById('pazienteForm').reset();
-            document.querySelectorAll('#pazienteForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
+            document.querySelectorAll('#pazienteForm input').forEach(function(el) { el.classList.remove('range-ok', 'range-warning', 'range-critical'); });
             document.getElementById('p_id').value = '';
             if (paziente) {
                 document.getElementById('p_id').value = paziente.id;
@@ -536,7 +532,7 @@ if ($current_team_id) {
                 document.getElementById('p_altezza').value = paziente.altezza;
                 document.getElementById('p_peso').value = paziente.peso;
                 document.getElementById('p_bmi').value = paziente.bmi;
-                ['eta', 'altezza', 'peso', 'bmi'].forEach(p => {
+                ['eta', 'altezza', 'peso', 'bmi'].forEach(function(p) {
                     const input = document.getElementById('p_' + p);
                     if (input) validateParam(p, input);
                 });
@@ -549,31 +545,24 @@ if ($current_team_id) {
             const pazienti = await res.json();
             const tbody = document.getElementById('pazienti-table-body');
             tbody.innerHTML = '';
-            pazienti.forEach(p => {
+            pazienti.forEach(function(p) {
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="p-2 md:p-4">${p.id}</td>
-                    <td class="p-2 md:p-4 font-medium">${decrypt(p.nome_cognome)}</td>
-                    <td class="p-2 md:p-4">${p.sesso}</td>
-                    <td class="p-2 md:p-4">${p.eta}</td>
-                    <td class="p-2 md:p-4">${p.bmi}</td>
-                    <td class="p-2 md:p-4">
-                        <div class="flex items-center justify-center space-x-1 md:space-x-2">
-                            <button onclick='viewDetails(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-blue-500 hover:text-blue-700 p-1" title="Dettagli">
-                                <i class="ph ph-eye text-lg md:text-xl"></i>
-                            </button>
-                            ${p.can_edit ? `
-                            <button onclick='openPazienteModal(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-yellow-600 hover:text-yellow-800 p-1" title="Modifica">
-                                <i class="ph ph-pencil-line text-lg md:text-xl"></i>
-                            </button>` : ''}
-                            ${p.can_delete ? `
-                            <button onclick="deletePaziente(${p.id})" class="text-red-500 hover:text-red-700 p-1" title="Elimina">
-                                <i class="ph ph-trash text-lg md:text-xl"></i>
-                            </button>` : ''}
-                        </div>
-                    </td>
-                `;
+                const pData = JSON.stringify(p).replace(/'/g, "&apos;");
+                row.innerHTML = '<td class="p-2 md:p-4">' + p.id + '</td>' +
+                    '<td class="p-2 md:p-4 font-medium">' + decrypt(p.nome_cognome) + '</td>' +
+                    '<td class="p-2 md:p-4">' + p.sesso + '</td>' +
+                    '<td class="p-2 md:p-4">' + p.eta + '</td>' +
+                    '<td class="p-2 md:p-4">' + p.bmi + '</td>' +
+                    '<td class="p-2 md:p-4 text-center">' +
+                        '<div class="flex items-center justify-center space-x-1 md:space-x-2">' +
+                            '<button onclick=\'viewDetails(' + pData + ')\' class="text-blue-500 hover:text-blue-700 p-1" title="Dettagli">' +
+                                '<i class="ph ph-eye text-lg md:text-xl"></i>' +
+                            '</button>' +
+                            (p.can_edit ? '<button onclick=\'openPazienteModal(' + pData + ')\' class="text-yellow-600 hover:text-yellow-800 p-1" title="Modifica"><i class="ph ph-pencil-line text-lg md:text-xl"></i></button>' : '') +
+                            (p.can_delete ? '<button onclick="deletePaziente(' + p.id + ')" class="text-red-500 hover:text-red-700 p-1" title="Elimina"><i class="ph ph-trash text-lg md:text-xl"></i></button>' : '') +
+                        '</div>' +
+                    '</td>';
                 tbody.appendChild(row);
             });
         }
@@ -602,8 +591,8 @@ if ($current_team_id) {
         }
 
         async function deletePaziente(id) {
-            if (confirm('Sei sicuro di voler eliminare questo paziente e tutti i suoi dati?')) {
-                await fetch(`api.php?action=pazienti&id=${id}`, { method: 'DELETE' });
+            if (confirm('Sei sicuro di voler eliminare questo paziente?')) {
+                await fetch('api.php?action=pazienti&id=' + id, { method: 'DELETE' });
                 loadPazienti();
             }
         }
@@ -617,56 +606,48 @@ if ($current_team_id) {
         }
 
         async function loadInterventi() {
-            const res = await fetch(`api.php?action=interventi&paziente_id=${currentPazienteId}`);
+            const res = await fetch('api.php?action=interventi&paziente_id=' + currentPazienteId);
             const interventi = await res.json();
             const list = document.getElementById('interventi-list');
             list.innerHTML = '';
-            for (const i of interventi) {
+            for (let i = 0; i < interventi.length; i++) {
+                const intv = interventi[i];
                 const div = document.createElement('div');
                 div.className = 'p-4 bg-gray-50 rounded border';
-                div.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <strong>${i.tipo_intervento}</strong> - ASA: ${i.asa_score} - ${i.urgenza == 1 ? 'URGENTE' : 'Elezione'}
-                            <br><span class="text-xs text-blue-600">${i.uo_name || ''}</span>
-                        </div>
-                        <div class="space-x-2 flex">
-                            ${i.can_edit ? `
-                            <button onclick='openInterventoModal(${JSON.stringify(i).replace(/'/g, "&apos;")})' class="text-yellow-600 p-1" title="Modifica">
-                                <i class="ph ph-pencil-line text-lg"></i>
-                            </button>` : ''}
-                            ${i.can_delete ? `
-                            <button onclick="deleteIntervento(${i.id})" class="text-red-500 p-1" title="Elimina">
-                                <i class="ph ph-trash text-lg"></i>
-                            </button>` : ''}
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-600 mb-2">
-                        Euroscore: ${i.euroscore_ii} | CEC: ${i.durata_cec_ore}h | IOT: ${i.timing_iot_h}h
-                    </div>
-                    ${i.comorbilita ? `<div class="text-xs text-gray-500 mb-2"><strong>Comorbidità:</strong> ${i.comorbilita}</div>` : ''}
-                    <div class="ml-4">
-                        <h5 class="font-semibold text-xs border-b mb-1 flex justify-between">
-                            Rilevazioni Cliniche
-                            <button onclick="openRilevazioneModal(${i.id})" class="text-blue-500">+ Aggiungi</button>
-                        </h5>
-                        <div id="rilevazioni-for-${i.id}" class="space-y-1 mb-2"></div>
-                        <h5 class="font-semibold text-xs border-b mb-1 flex justify-between">
-                            Esito Weaning
-                            <span id="esito-action-${i.id}"></span>
-                        </h5>
-                        <div id="esito-for-${i.id}" class="text-xs"></div>
-                    </div>
-                `;
+                const iData = JSON.stringify(intv).replace(/'/g, "&apos;");
+                div.innerHTML = '<div class="flex justify-between items-start mb-2">' +
+                    '<div>' +
+                        '<strong>' + intv.tipo_intervento + '</strong> - ASA: ' + intv.asa_score + ' - ' + (intv.urgenza == 1 ? 'URGENTE' : 'Elezione') +
+                        '<br><span class="text-xs text-blue-600">' + (intv.uo_name || '') + '</span>' +
+                    '</div>' +
+                    '<div class="space-x-2 flex">' +
+                        (intv.can_edit ? '<button onclick=\'openInterventoModal(' + iData + ')\' class="text-yellow-600 p-1" title="Modifica"><i class="ph ph-pencil-line text-lg"></i></button>' : '') +
+                        (intv.can_delete ? '<button onclick="deleteIntervento(' + intv.id + ')" class="text-red-500 p-1" title="Elimina"><i class="ph ph-trash text-lg"></i></button>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<div class="text-sm text-gray-600 mb-2">Euroscore: ' + intv.euroscore_ii + ' | CEC: ' + intv.durata_cec_ore + 'h | IOT: ' + intv.timing_iot_h + 'h</div>' +
+                (intv.comorbilita ? '<div class="text-xs text-gray-500 mb-2"><strong>Comorbidità:</strong> ' + intv.comorbilita + '</div>' : '') +
+                '<div class="ml-4">' +
+                    '<h5 class="font-semibold text-xs border-b mb-1 flex justify-between">' +
+                        'Rilevazioni Cliniche' +
+                        '<button onclick="openRilevazioneModal(' + intv.id + ')" class="text-blue-500">+ Aggiungi</button>' +
+                    '</h5>' +
+                    '<div id="rilevazioni-for-' + intv.id + '" class="space-y-1 mb-2"></div>' +
+                    '<h5 class="font-semibold text-xs border-b mb-1 flex justify-between">' +
+                        'Esito Weaning' +
+                        '<span id="esito-action-' + intv.id + '"></span>' +
+                    '</h5>' +
+                    '<div id="esito-for-' + intv.id + '" class="text-xs"></div>' +
+                '</div>';
                 list.appendChild(div);
-                loadRilevazioni(i.id);
-                loadEsito(i.id);
+                loadRilevazioni(intv.id);
+                loadEsito(intv.id);
             }
         }
 
-        async function openInterventoModal(intervento = null) {
+        function openInterventoModal(intervento) {
             document.getElementById('interventoForm').reset();
-            document.querySelectorAll('#interventoForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
+            document.querySelectorAll('#interventoForm input').forEach(function(el) { el.classList.remove('range-ok', 'range-warning', 'range-critical'); });
             document.getElementById('i_id').value = '';
             document.getElementById('i_paziente_id').value = currentPazienteId;
             if (intervento) {
@@ -675,11 +656,11 @@ if ($current_team_id) {
                 document.getElementById('i_comorbilita').value = intervento.comorbilita || '';
                 document.getElementById('i_asa').value = intervento.asa_score;
                 document.getElementById('i_tipo').value = intervento.tipo_intervento;
-                document.getElementById('i_urgenza').checked = intervento.urgenza == 1;
+                document.getElementById('i_urgenza').checked = (intervento.urgenza == 1);
                 document.getElementById('i_euroscore').value = intervento.euroscore_ii;
                 document.getElementById('i_cec').value = intervento.durata_cec_ore;
                 document.getElementById('i_iot').value = intervento.timing_iot_h;
-                ['asa_score', 'euroscore_ii', 'durata_cec_ore', 'timing_iot_h'].forEach(p => {
+                ['asa_score', 'euroscore_ii', 'durata_cec_ore', 'timing_iot_h'].forEach(function(p) {
                     const idMap = { 'asa_score': 'i_asa', 'euroscore_ii': 'i_euroscore', 'durata_cec_ore': 'i_cec', 'timing_iot_h': 'i_iot' };
                     const input = document.getElementById(idMap[p]);
                     if (input) validateParam(p, input);
@@ -717,75 +698,65 @@ if ($current_team_id) {
 
         async function deleteIntervento(id) {
             if (confirm('Eliminare questo intervento?')) {
-                await fetch(`api.php?action=interventi&id=${id}`, { method: 'DELETE' });
+                await fetch('api.php?action=interventi&id=' + id, { method: 'DELETE' });
                 loadInterventi();
             }
         }
 
         function toggleRilevazione(id) {
-            const content = document.getElementById(`rilevazione-content-${id}`);
+            const content = document.getElementById('rilevazione-content-' + id);
             const isHidden = content.classList.contains('hidden');
-            document.querySelectorAll('[id^="rilevazione-content-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="rilevazione-content-"]').forEach(function(el) { el.classList.add('hidden'); });
             if (isHidden) content.classList.remove('hidden');
         }
 
         async function loadRilevazioni(intervento_id) {
-            const res = await fetch(`api.php?action=rilevazioni&intervento_id=${intervento_id}`);
+            const res = await fetch('api.php?action=rilevazioni&intervento_id=' + intervento_id);
             const rilevazioni = await res.json();
-            const div = document.getElementById(`rilevazioni-for-${intervento_id}`);
+            const div = document.getElementById('rilevazioni-for-' + intervento_id);
             div.innerHTML = '';
-            rilevazioni.forEach(r => {
+            rilevazioni.forEach(function(r) {
                 const item = document.createElement('div');
                 item.className = 'mb-1 border rounded overflow-hidden';
                 const tobinWarning = r.tobin_index > 105 ? 'text-red-600 font-bold' : (r.tobin_index > 80 ? 'text-orange-500' : '');
                 const roxWarning = r.rox_index < 3.85 ? 'text-red-600 font-bold' : '';
                 let extra = '';
-                if(r.maschera_venturi) extra += ` Venturi: ${r.maschera_venturi}`;
-                if(r.hfno) extra += ` HFNO: ${r.hfno}`;
-                if(r.niv) extra += ` NIV: ${r.niv}`;
-                item.innerHTML = `
-                    <div class="flex justify-between items-center bg-white p-2 cursor-pointer hover:bg-gray-50" onclick="toggleRilevazione(${r.id})">
-                        <span class="text-xs truncate pr-2 flex-1">
-                            <strong>${r.fase}:</strong> FR ${r.fr}, TV ${r.tv},
-                            Tobin: <span class="${tobinWarning}">${r.tobin_index}</span>,
-                            ROX: <span class="${roxWarning}">${r.rox_index}</span>,
-                            SpO2 ${r.spo2}%, NRS ${r.nrs_dolore} ${extra}
-                        </span>
-                        <div class="flex items-center space-x-2 ml-2" onclick="event.stopPropagation()">
-                            ${r.can_edit ? `
-                            <button onclick='openRilevazioneModal(${intervento_id}, ${JSON.stringify(r).replace(/'/g, "&apos;")})' class="text-yellow-600 p-1" title="Modifica">
-                                <i class="ph ph-pencil-line"></i>
-                            </button>` : ''}
-                            ${r.can_delete ? `
-                            <button onclick="deleteRilevazione(${r.id}, ${intervento_id})" class="text-red-500 p-1" title="Elimina">
-                                <i class="ph ph-trash"></i>
-                            </button>` : ''}
-                        </div>
-                    </div>
-                    <div id="rilevazione-content-${r.id}" class="hidden p-3 bg-gray-50 border-t grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">Data/Ora:</span><br>${r.data_ora}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">FR:</span><br>${r.fr} bpm</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">TV:</span><br>${r.tv} L</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">Tobin:</span><br>${r.tobin_index}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">SpO2:</span><br>${r.spo2}%</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">FiO2:</span><br>${r.fio2}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">ROX:</span><br>${r.rox_index}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">PEEP:</span><br>${r.peep}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">Pres. Supp.:</span><br>${r.pressure_support}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">NRS Dolore:</span><br>${r.nrs_dolore}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">NAS Score:</span><br>${r.nas_score}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">Venturi:</span><br>${r.maschera_venturi || '-'}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">HFNO:</span><br>${r.hfno || '-'}</div>
-                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">NIV:</span><br>${r.niv || '-'}</div>
-                    </div>
-                `;
+                if(r.maschera_venturi) extra += ' Venturi: ' + r.maschera_venturi;
+                if(r.hfno) extra += ' HFNO: ' + r.hfno;
+                if(r.niv) extra += ' NIV: ' + r.niv;
+                const rData = JSON.stringify(r).replace(/'/g, "&apos;");
+                item.innerHTML = '<div class="flex justify-between items-center bg-white p-2 cursor-pointer hover:bg-gray-50" onclick="toggleRilevazione(' + r.id + ')">' +
+                    '<span class="text-xs truncate pr-2 flex-1">' +
+                        '<strong>' + r.fase + ':</strong> FR ' + r.fr + ', TV ' + r.tv + ', Tobin: <span class="' + tobinWarning + '">' + r.tobin_index + '</span>, ROX: <span class="' + roxWarning + '">' + r.rox_index + '</span>, SpO2 ' + r.spo2 + '%, NRS ' + r.nrs_dolore + extra +
+                    '</span>' +
+                    '<div class="flex items-center space-x-2 ml-2" onclick="event.stopPropagation()">' +
+                        (r.can_edit ? '<button onclick=\'openRilevazioneModal(' + intervento_id + ', ' + rData + ')\' class="text-yellow-600 p-1" title="Modifica"><i class="ph ph-pencil-line"></i></button>' : '') +
+                        (r.can_delete ? '<button onclick="deleteRilevazione(' + r.id + ', ' + intervento_id + ')" class="text-red-500 p-1" title="Elimina"><i class="ph ph-trash"></i></button>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<div id="rilevazione-content-' + r.id + '" class="hidden p-3 bg-gray-50 border-t grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">Data/Ora:</span><br>' + r.data_ora + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">FR:</span><br>' + r.fr + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">TV:</span><br>' + r.tv + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">Tobin:</span><br>' + r.tobin_index + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">SpO2:</span><br>' + r.spo2 + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">FiO2:</span><br>' + r.fio2 + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">ROX:</span><br>' + r.rox_index + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">PEEP:</span><br>' + r.peep + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">Pres. Supp.:</span><br>' + r.pressure_support + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">NRS Dolore:</span><br>' + r.nrs_dolore + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">NAS Score:</span><br>' + r.nas_score + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">Venturi:</span><br>' + (r.maschera_venturi || '-') + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">HFNO:</span><br>' + (r.hfno || '-') + '</div>' +
+                    '<div><span class="text-gray-500 uppercase font-bold text-[10px]">NIV:</span><br>' + (r.niv || '-') + '</div>' +
+                '</div>';
                 div.appendChild(item);
             });
         }
 
-        function openRilevazioneModal(intervento_id, r = null) {
+        function openRilevazioneModal(intervento_id, r) {
             document.getElementById('rilevazioneForm').reset();
-            document.querySelectorAll('#rilevazioneForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
+            document.querySelectorAll('#rilevazioneForm input').forEach(function(el) { el.classList.remove('range-ok', 'range-warning', 'range-critical'); });
             document.getElementById('r_intervento_id').value = intervento_id;
             document.getElementById('r_id').value = '';
             const now = new Date();
@@ -808,8 +779,14 @@ if ($current_team_id) {
                 document.getElementById('r_venturi').value = r.maschera_venturi || '';
                 document.getElementById('r_hfno').value = r.hfno || '';
                 document.getElementById('r_niv').value = r.niv || '';
-                ['fr', 'tv', 'tobin_index', 'spo2', 'fio2', 'rox_index', 'peep', 'pressure_support', 'nrs_dolore', 'nas_score'].forEach(p => {
-                    const input = document.getElementById('r_' + (p === 'tobin_index' ? 'tobin' : (p === 'rox_index' ? 'rox' : (p === 'pressure_support' ? 'ps' : (p === 'nrs_dolore' ? 'dolore' : (p === 'nas_score' ? 'nas' : p))))));
+                ['fr', 'tv', 'tobin_index', 'spo2', 'fio2', 'rox_index', 'peep', 'pressure_support', 'nrs_dolore', 'nas_score'].forEach(function(p) {
+                    let fieldId = 'r_' + p;
+                    if (p === 'tobin_index') fieldId = 'r_tobin';
+                    if (p === 'rox_index') fieldId = 'r_rox';
+                    if (p === 'pressure_support') fieldId = 'r_ps';
+                    if (p === 'nrs_dolore') fieldId = 'r_dolore';
+                    if (p === 'nas_score') fieldId = 'r_nas';
+                    const input = document.getElementById(fieldId);
                     if (input) validateParam(p, input);
                 });
             }
@@ -856,52 +833,42 @@ if ($current_team_id) {
 
         async function deleteRilevazione(id, int_id) {
             if (confirm('Eliminare rilevazione?')) {
-                await fetch(`api.php?action=rilevazioni&id=${id}`, { method: 'DELETE' });
+                await fetch('api.php?action=rilevazioni&id=' + id, { method: 'DELETE' });
                 loadRilevazioni(int_id);
             }
         }
 
         async function loadEsito(intervento_id) {
-            const res = await fetch(`api.php?action=esito&intervento_id=${intervento_id}`);
+            const res = await fetch('api.php?action=esito&intervento_id=' + intervento_id);
             const esiti = await res.json();
-            const div = document.getElementById(`esito-for-${intervento_id}`);
-            const actionSpan = document.getElementById(`esito-action-${intervento_id}`);
+            const div = document.getElementById('esito-for-' + intervento_id);
+            const actionSpan = document.getElementById('esito-action-' + intervento_id);
             div.innerHTML = '';
             if (esiti.length > 0) {
-                const e = esiti[0];
-                div.innerHTML = `
-                    Successo: ${e.successo == 1 ? 'SÌ' : 'NO'}, Post: ${e.tipo_post_estubazione},
-                    Fallimento: ${e.fallimento_iot == 1 ? 'SÌ' : 'NO'} (${e.ore_da_estubazione_a_failure}h)
-                `;
-                actionSpan.innerHTML = `
-                    <div class="flex space-x-2">
-                        \${e.can_edit ? `
-                        <button onclick='openEsitoModal(\${intervento_id}, \${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-yellow-600" title="Modifica">
-                             <i class="ph ph-pencil-line"></i>
-                        </button>` : ''}
-                        \${e.can_delete ? `
-                        <button onclick="deleteEsito(\${e.id}, \${intervento_id})" class="text-red-500" title="Elimina">
-                             <i class="ph ph-trash"></i>
-                        </button>` : ''}
-                    </div>
-                `;
+                const es = esiti[0];
+                const eData = JSON.stringify(es).replace(/'/g, "&apos;");
+                div.innerHTML = 'Successo: ' + (es.successo == 1 ? 'SÌ' : 'NO') + ', Post: ' + (es.tipo_post_estubazione || '-') + ', Fallimento: ' + (es.fallimento_iot == 1 ? 'SÌ' : 'NO') + ' (' + es.ore_da_estubazione_a_failure + 'h)';
+                actionSpan.innerHTML = '<div class="flex space-x-2">' +
+                    (es.can_edit ? '<button onclick=\'openEsitoModal(' + intervento_id + ', ' + eData + ')\' class="text-yellow-600" title="Modifica"><i class="ph ph-pencil-line"></i></button>' : '') +
+                    (es.can_delete ? '<button onclick="deleteEsito(' + es.id + ', ' + intervento_id + ')" class="text-red-500" title="Elimina"><i class="ph ph-trash"></i></button>' : '') +
+                '</div>';
             } else {
                 div.innerHTML = '<span class="text-gray-400">Nessun esito registrato</span>';
-                actionSpan.innerHTML = `<button onclick="openEsitoModal(\${intervento_id})" class="text-blue-500">+ Aggiungi</button>`;
+                actionSpan.innerHTML = '<button onclick="openEsitoModal(' + intervento_id + ')" class="text-blue-500">+ Aggiungi</button>';
             }
         }
 
-        function openEsitoModal(intervento_id, e = null) {
+        function openEsitoModal(intervento_id, esito) {
             document.getElementById('esitoForm').reset();
-            document.querySelectorAll('#esitoForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
+            document.querySelectorAll('#esitoForm input').forEach(function(el) { el.classList.remove('range-ok', 'range-warning', 'range-critical'); });
             document.getElementById('e_intervento_id').value = intervento_id;
             document.getElementById('e_id').value = '';
-            if (e) {
-                document.getElementById('e_id').value = e.id;
-                document.getElementById('e_successo').checked = e.successo == 1;
-                document.getElementById('e_tipo').value = e.tipo_post_estubazione || '';
-                document.getElementById('e_fallimento').checked = e.fallimento_iot == 1;
-                document.getElementById('e_ore').value = e.ore_da_estubazione_a_failure;
+            if (esito) {
+                document.getElementById('e_id').value = esito.id;
+                document.getElementById('e_successo').checked = (esito.successo == 1);
+                document.getElementById('e_tipo').value = esito.tipo_post_estubazione || '';
+                document.getElementById('e_fallimento').checked = (esito.fallimento_iot == 1);
+                document.getElementById('e_ore').value = esito.ore_da_estubazione_a_failure;
                 const input = document.getElementById('e_ore');
                 if (input) validateParam('ore_da_estubazione_a_failure', input);
             }
@@ -934,7 +901,7 @@ if ($current_team_id) {
 
         async function deleteEsito(id, int_id) {
             if (confirm('Eliminare esito?')) {
-                await fetch(`api.php?action=esito&id=${id}`, { method: 'DELETE' });
+                await fetch('api.php?action=esito&id=' + id, { method: 'DELETE' });
                 loadEsito(int_id);
             }
         }
@@ -943,14 +910,19 @@ if ($current_team_id) {
             const res = await fetch('api.php?action=all_data');
             const data = await res.json();
             if (data.length === 0) { alert("Nessun dato da esportare"); return; }
-            const decryptedData = data.map(row => ({ ...row, nome_cognome: decrypt(row.nome_cognome) }));
+            const decryptedData = data.map(function(row) {
+                const r = Object.assign({}, row);
+                r.nome_cognome = decrypt(row.nome_cognome);
+                return r;
+            });
             const headers = Object.keys(decryptedData[0]);
             const csvRows = [headers.join(',')];
-            for (const row of decryptedData) {
-                const values = headers.map(header => {
+            for (let i = 0; i < decryptedData.length; i++) {
+                const row = decryptedData[i];
+                const values = headers.map(function(header) {
                     const val = row[header] === null ? '' : row[header];
                     const escaped = ('' + val).replace(/"/g, '""');
-                    return `"${escaped}"`;
+                    return '"' + escaped + '"';
                 });
                 csvRows.push(values.join(','));
             }
@@ -982,7 +954,7 @@ if ($current_team_id) {
             } catch (error) {
                 console.error(error);
                 message.innerText = "Errore OCR.";
-                setTimeout(() => status.classList.add('hidden'), 3000);
+                setTimeout(function() { status.classList.add('hidden'); }, 3000);
             }
         }
 
@@ -997,14 +969,17 @@ if ($current_team_id) {
                 { field: 'r_tv', keywords: ['TV', 'VOL', 'TIDAL'] }
             ];
             const cleanText = text.toUpperCase().replace(/\s+/g, ' ');
-            mappings.forEach(m => {
-                m.keywords.forEach(key => {
-                    const regex = new RegExp(`${key}\\s*[:=]?\\s*(\\d+[.,]?\\d*)`, 'i');
+            mappings.forEach(function(m) {
+                m.keywords.forEach(function(key) {
+                    const regex = new RegExp(key + '\\s*[:=]?\\s*(\\d+[.,]?\\d*)', 'i');
                     const match = cleanText.match(regex);
                     if (match && match[1]) {
                         const value = match[1].replace(',', '.');
                         const input = document.getElementById(m.field);
-                        if (input && (!input.value || input.value == 0)) input.value = value;
+                        if (input && (!input.value || input.value == 0)) {
+                            input.value = value;
+                            validateParam(m.field.replace('r_', ''), input);
+                        }
                     }
                 });
             });

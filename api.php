@@ -26,22 +26,32 @@ function canEditPatient($db, $paziente_id) {
     global $user_id, $current_team_id;
     if (!$current_team_id) return false;
 
-    // Check if user created it
+    // 1. Check if user created the patient
     $stmt = $db->prepare("SELECT created_by FROM pazienti WHERE id = ?");
     $stmt->execute([$paziente_id]);
     if ($stmt->fetchColumn() == $user_id) return true;
 
-    // Check if user is leader or has can_edit_all in a team the patient belongs to
-    $stmt = $db->prepare("
-        SELECT COUNT(*)
-        FROM patient_teams pt
-        JOIN teams t ON pt.team_id = t.id
-        LEFT JOIN user_teams ut ON t.id = ut.team_id AND ut.user_id = ?
-        WHERE pt.paziente_id = ? AND pt.team_id = ?
-        AND (t.leader_id = ? OR ut.can_edit_all = 1)
-    ");
-    $stmt->execute([$user_id, $paziente_id, $current_team_id, $user_id]);
-    return $stmt->fetchColumn() > 0;
+    // 2. Check if user is Leader of the active team
+    $stmt = $db->prepare("SELECT leader_id FROM teams WHERE id = ?");
+    $stmt->execute([$current_team_id]);
+    if ($stmt->fetchColumn() == $user_id) {
+        // Verify patient belongs to this team
+        $stmt = $db->prepare("SELECT COUNT(*) FROM patient_teams WHERE paziente_id = ? AND team_id = ?");
+        $stmt->execute([$paziente_id, $current_team_id]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    // 3. Check if user has can_edit_all in the active team
+    $stmt = $db->prepare("SELECT can_edit_all FROM user_teams WHERE user_id = ? AND team_id = ?");
+    $stmt->execute([$user_id, $current_team_id]);
+    if ($stmt->fetchColumn() == 1) {
+        // Verify patient belongs to this team
+        $stmt = $db->prepare("SELECT COUNT(*) FROM patient_teams WHERE paziente_id = ? AND team_id = ?");
+        $stmt->execute([$paziente_id, $current_team_id]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    return false;
 }
 
 function canDelete($db, $table, $id) {
