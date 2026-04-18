@@ -34,6 +34,15 @@ switch ($action) {
     case 'all_data':
         handleAllData($db);
         break;
+    case 'ranges':
+        handleRanges($db, $method);
+        break;
+    case 'tags':
+        handleTags($db, $method);
+        break;
+    case 'rename_tag':
+        handleRenameTag($db, $method);
+        break;
     default:
         echo json_encode(['error' => 'Invalid action']);
         break;
@@ -172,5 +181,124 @@ function handleAllData($db) {
             LEFT JOIN esito_weaning e ON i.id = e.intervento_id";
     $stmt = $db->query($sql);
     echo json_encode($stmt->fetchAll());
+}
+
+function handleRanges($db, $method) {
+    if ($method === 'GET') {
+        $stmt = $db->query("SELECT * FROM clinical_ranges ORDER BY category, parameter");
+        echo json_encode($stmt->fetchAll());
+    } elseif ($method === 'POST') {
+        if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
+        $data = json_decode(file_get_contents('php://input'), true);
+        $stmt = $db->prepare("UPDATE clinical_ranges SET min_normal=?, max_normal=?, min_critical=?, max_critical=?, step=?, unit=? WHERE parameter=?");
+        $stmt->execute([
+            $data['min_normal'] ?? 0,
+            $data['max_normal'] ?? 0,
+            $data['min_critical'] ?? 0,
+            $data['max_critical'] ?? 0,
+            $data['step'] ?? 0.1,
+            $data['unit'] ?? '',
+            $data['parameter'] ?? ''
+        ]);
+        logActivity($db, 'UPDATE_RANGE', "Parametro: " . ($data['parameter'] ?? 'unknown'));
+        echo json_encode(['success' => true]);
+    }
+}
+
+function handleRenameTag($db, $method) {
+    if ($method !== 'POST') return;
+    if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    $oldName = $data['old_name'];
+    $newName = $data['new_name'];
+    $category = $data['category'];
+
+    try {
+        $db->beginTransaction();
+
+        // 1. Update tag library
+        // Check if new name exists
+        $stmt = $db->prepare("SELECT id FROM tag_library WHERE category = ? AND name = ?");
+        $stmt->execute([$category, $newName]);
+        $exists = $stmt->fetch();
+
+        if ($exists) {
+            // Merge: delete old, keep new
+            $stmt = $db->prepare("DELETE FROM tag_library WHERE category = ? AND name = ?");
+            $stmt->execute([$category, $oldName]);
+        } else {
+            // Rename
+            $stmt = $db->prepare("UPDATE tag_library SET name = ? WHERE category = ? AND name = ?");
+            $stmt->execute([$newName, $category, $oldName]);
+        }
+
+        // 2. Update existing data in clinical tables
+        $mappings = [
+            'tipo_intervento' => ['table' => 'interventi', 'column' => 'tipo_intervento'],
+            'comorbilita' => ['table' => 'interventi', 'column' => 'comorbilita'],
+            'maschera_venturi' => ['table' => 'rilevazioni_cliniche', 'column' => 'maschera_venturi'],
+            'hfno' => ['table' => 'rilevazioni_cliniche', 'column' => 'hfno'],
+            'niv' => ['table' => 'rilevazioni_cliniche', 'column' => 'niv'],
+            'tipo_post_estubazione' => ['table' => 'esito_weaning', 'column' => 'tipo_post_estubazione']
+        ];
+
+        if (isset($mappings[$category])) {
+            $m = $mappings[$category];
+            $table = $m['table'];
+            $col = $m['column'];
+
+            // Fetch all rows containing the old tag
+            $stmt = $db->prepare("SELECT id, $col FROM $table WHERE $col LIKE ?");
+            $stmt->execute(["%$oldName%"]);
+            $rows = $stmt->fetchAll();
+
+            foreach ($rows as $row) {
+                $tags = array_map('trim', explode(',', $row[$col]));
+                $updated = false;
+                foreach ($tags as &$t) {
+                    if ($t === $oldName) {
+                        $t = $newName;
+                        $updated = true;
+                    }
+                }
+                if ($updated) {
+                    $newVal = implode(', ', array_unique($tags));
+                    $upd = $db->prepare("UPDATE $table SET $col = ? WHERE id = ?");
+                    $upd->execute([$newVal, $row['id']]);
+                }
+            }
+        }
+
+        $db->commit();
+        echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+        $db->rollBack();
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+}
+
+function handleTags($db, $method) {
+    if ($method === 'GET') {
+        $category = $_GET['category'] ?? null;
+        if ($category) {
+            $stmt = $db->prepare("SELECT name FROM tag_library WHERE category = ? ORDER BY name");
+            $stmt->execute([$category]);
+        } else {
+            $stmt = $db->query("SELECT * FROM tag_library ORDER BY category, name");
+        }
+        echo json_encode($stmt->fetchAll());
+    } elseif ($method === 'POST') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $stmt = $db->prepare("INSERT IGNORE INTO tag_library (category, name) VALUES (?, ?)");
+        $stmt->execute([$data['category'], $data['name']]);
+        echo json_encode(['success' => true]);
+    } elseif ($method === 'DELETE') {
+        if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
+        $id = $_GET['id'];
+        $stmt = $db->prepare("DELETE FROM tag_library WHERE id = ?");
+        $stmt->execute([$id]);
+        echo json_encode(['success' => true]);
+    }
 }
 ?>

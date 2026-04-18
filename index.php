@@ -77,18 +77,36 @@ if (!isLoggedIn()): ?>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
-        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 800px; border-radius: 8px; }
+        .modal-content { background-color: #fefefe; margin: 2% auto; padding: 20px; border: 1px solid #888; width: 95%; max-width: 900px; border-radius: 12px; }
+        @media (max-width: 640px) {
+            .modal-content { margin: 0; width: 100%; min-height: 100%; border-radius: 0; padding: 15px; }
+            input, select, textarea { font-size: 16px !important; } /* Prevents iOS zoom */
+        }
+        .range-ok { background-color: #dcfce7; border-color: #22c55e; }
+        .range-warning { background-color: #fef9c3; border-color: #eab308; }
+        .range-critical { background-color: #fee2e2; border-color: #ef4444; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-blue-600 text-white p-4 shadow-lg flex flex-wrap justify-between items-center gap-2">
-        <h1 class="text-xl font-bold">StatMed2 Dashboard</h1>
+        <h1 class="text-xl font-bold">StatMed2</h1>
         <div class="flex flex-wrap items-center gap-2 md:gap-4">
             <span class="text-sm">Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?> <strong><?php echo $_SESSION['name']; ?></strong></span>
             <div class="flex items-center space-x-2">
-                <a href="stats.php" class="bg-purple-500 hover:bg-purple-600 px-2 py-1 rounded text-xs md:text-sm transition">Statistiche</a>
-                <button onclick="exportCSV()" class="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-xs md:text-sm transition">CSV</button>
-                <a href="?action=logout" class="bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-xs md:text-sm transition">Esci</a>
+                <a href="stats.php" class="bg-purple-500 hover:bg-purple-600 p-2 rounded-full text-white transition" title="Statistiche">
+                    <i class="ph ph-chart-line-up text-xl"></i>
+                </a>
+                <?php if (isAdmin()): ?>
+                <a href="settings.php" class="bg-gray-700 hover:bg-gray-800 p-2 rounded-full text-white transition" title="Impostazioni">
+                    <i class="ph ph-gear text-xl"></i>
+                </a>
+                <?php endif; ?>
+                <button onclick="exportCSV()" class="bg-green-500 hover:bg-green-600 p-2 rounded-full text-white transition" title="Export CSV">
+                    <i class="ph ph-download-simple text-xl"></i>
+                </button>
+                <a href="?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
+                    <i class="ph ph-sign-out text-xl"></i>
+                </a>
             </div>
         </div>
     </nav>
@@ -137,19 +155,19 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Età</label>
-                    <input type="number" id="p_eta" class="w-full p-2 border rounded" required>
+                    <input type="number" inputmode="numeric" id="p_eta" oninput="validateParam('eta', this)" class="w-full p-2 border rounded" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Altezza (m)</label>
-                    <input type="number" step="0.01" min="0" max="3" id="p_altezza" oninput="calculateBMI()" class="w-full p-2 border rounded" required>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" max="3" id="p_altezza" oninput="calculateBMI(); validateParam('altezza', this)" class="w-full p-2 border rounded" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Peso (kg)</label>
-                    <input type="number" step="0.1" min="0" id="p_peso" oninput="calculateBMI()" class="w-full p-2 border rounded" required>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="p_peso" oninput="calculateBMI(); validateParam('peso', this)" class="w-full p-2 border rounded" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">BMI (Auto)</label>
-                    <input type="number" step="0.01" id="p_bmi" class="w-full p-2 border bg-gray-100" readonly>
+                    <input type="number" step="0.01" id="p_bmi" oninput="validateParam('bmi', this)" class="w-full p-2 border bg-gray-100" readonly>
                 </div>
                 <div class="md:col-span-2 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('pazienteModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -187,31 +205,35 @@ if (!isLoggedIn()): ?>
                 <input type="hidden" id="i_paziente_id">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Comorbidità</label>
-                    <textarea id="i_comorbilita" class="w-full p-2 border rounded"></textarea>
+                    <div id="i_comorbilita_tags" class="flex flex-wrap gap-1 mb-1"></div>
+                    <input type="text" id="i_comorbilita_input" placeholder="Aggiungi comorbidità..." class="w-full p-2 border rounded text-sm mb-1" onkeydown="handleTagInput(event, 'comorbilita', 'i_comorbilita')">
+                    <textarea id="i_comorbilita" class="hidden"></textarea>
+                    <div id="i_comorbilita_suggestions" class="flex flex-wrap gap-1"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">ASA Score</label>
-                    <input type="number" min="1" max="5" id="i_asa" class="w-full p-2 border rounded">
+                    <input type="number" inputmode="numeric" min="1" max="5" id="i_asa" oninput="validateParam('asa_score', this)" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Tipo Intervento</label>
-                    <input type="text" id="i_tipo" class="w-full p-2 border rounded">
+                    <input type="text" id="i_tipo" list="tipo_intervento_list" onchange="addTagToField('tipo_intervento', this.value, 'i_tipo')" class="w-full p-2 border rounded">
+                    <datalist id="tipo_intervento_list"></datalist>
                 </div>
                 <div class="flex items-center">
                     <input type="checkbox" id="i_urgenza" class="mr-2">
                     <label class="text-sm font-medium text-gray-700">Urgenza</label>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Euroscore II</label>
-                    <input type="number" step="0.01" min="0" id="i_euroscore" class="w-full p-2 border rounded">
+                    <label class="block text-sm font-medium text-gray-700">Euroscore II (%)</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" id="i_euroscore" oninput="validateParam('euroscore_ii', this)" class="w-full p-2 border rounded">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Durata CEC (ore)</label>
-                    <input type="number" step="0.1" min="0" id="i_cec" class="w-full p-2 border rounded">
+                    <label class="block text-sm font-medium text-gray-700">Durata CEC (h)</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="i_cec" oninput="validateParam('durata_cec_ore', this)" class="w-full p-2 border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Timing IOT (h)</label>
-                    <input type="number" step="0.1" min="0" id="i_iot" class="w-full p-2 border rounded">
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="i_iot" oninput="validateParam('timing_iot_h', this)" class="w-full p-2 border rounded">
                 </div>
                 <div class="md:col-span-2 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('interventoModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -244,16 +266,16 @@ if (!isLoggedIn()): ?>
                 <span id="ocr-message">Elaborazione immagine...</span>
             </div>
 
-            <form id="rilevazioneForm" onsubmit="saveRilevazione(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form id="rilevazioneForm" onsubmit="saveRilevazione(event)" class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                 <input type="hidden" id="r_id">
                 <input type="hidden" id="r_intervento_id">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Data e Ora</label>
-                    <input type="datetime-local" id="r_data_ora" class="w-full p-2 border rounded" required>
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Data e Ora</label>
+                    <input type="datetime-local" id="r_data_ora" class="w-full p-3 border rounded-lg shadow-sm" required>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Fase</label>
-                    <select id="r_fase" class="w-full p-2 border rounded">
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Fase</label>
+                    <select id="r_fase" class="w-full p-3 border rounded-lg shadow-sm">
                         <option value="PRE_SBT">PRE_SBT</option>
                         <option value="SBT">SBT</option>
                         <option value="ESTUBAZIONE">ESTUBAZIONE</option>
@@ -265,60 +287,63 @@ if (!isLoggedIn()): ?>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">FR (Freq. Resp.)</label>
-                    <input type="number" step="0.1" min="0" id="r_fr" oninput="calculateIndices()" class="w-full p-2 border rounded">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">FR (bpm)</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="r_fr" oninput="validateParam('fr', this); calculateIndices()" class="w-full p-3 border rounded-lg shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">TV (Vol. Corrente L)</label>
-                    <input type="number" step="0.001" min="0" id="r_tv" oninput="calculateIndices()" class="w-full p-2 border rounded">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">TV (L)</label>
+                    <input type="number" inputmode="decimal" step="0.001" min="0" id="r_tv" oninput="validateParam('tv', this); calculateIndices()" class="w-full p-3 border rounded-lg shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Tobin Index (RSBI)</label>
-                    <input type="number" step="0.1" id="r_tobin" class="w-full p-2 border bg-gray-100" readonly>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Tobin Index</label>
+                    <input type="number" id="r_tobin" oninput="validateParam('tobin_index', this)" class="w-full p-3 border rounded-lg bg-gray-100 shadow-sm" readonly>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">SpO2 (%)</label>
-                    <input type="number" step="0.1" min="0" max="100" id="r_spo2" oninput="calculateIndices()" class="w-full p-2 border rounded">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">SpO2 (%)</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" max="100" id="r_spo2" oninput="validateParam('spo2', this); calculateIndices()" class="w-full p-3 border rounded-lg shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">FiO2 (0.21-1.0)</label>
-                    <input type="number" step="0.01" min="0.21" max="1" id="r_fio2" oninput="calculateIndices()" class="w-full p-2 border rounded">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">FiO2 (0.21-1)</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0.21" max="1" id="r_fio2" oninput="validateParam('fio2', this); calculateIndices()" class="w-full p-3 border rounded-lg shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">ROX Index</label>
-                    <input type="number" step="0.01" id="r_rox" class="w-full p-2 border bg-gray-100" readonly>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">ROX Index</label>
+                    <input type="number" id="r_rox" oninput="validateParam('rox_index', this)" class="w-full p-3 border rounded-lg bg-gray-100 shadow-sm" readonly>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">PEEP</label>
-                    <input type="number" step="0.1" min="0" id="r_peep" class="w-full p-2 border rounded">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">PEEP</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="r_peep" oninput="validateParam('peep', this)" class="w-full p-3 border rounded-lg shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Pressure Support</label>
-                    <input type="number" step="0.1" min="0" id="r_ps" class="w-full p-2 border rounded">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Pres. Supp.</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="r_ps" oninput="validateParam('pressure_support', this)" class="w-full p-3 border rounded-lg shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">NRS Dolore (0-10)</label>
-                    <input type="number" min="0" max="10" id="r_dolore" class="w-full p-2 border rounded">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">NRS Dolore</label>
+                    <input type="number" inputmode="numeric" min="0" max="10" id="r_dolore" oninput="validateParam('nrs_dolore', this)" class="w-full p-3 border rounded-lg shadow-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">NAS Score</label>
-                    <input type="number" step="0.1" min="0" id="r_nas" class="w-full p-2 border rounded">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">NAS Score</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="r_nas" oninput="validateParam('nas_score', this)" class="w-full p-3 border rounded-lg shadow-sm">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Maschera Venturi (%-L\min)</label>
-                    <input type="text" id="r_venturi" class="w-full p-2 border rounded">
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">M. Venturi</label>
+                    <input type="text" id="r_venturi" list="maschera_venturi_list" class="w-full p-3 border rounded-lg shadow-sm">
+                    <datalist id="maschera_venturi_list"></datalist>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">HFNO (%-L/min)</label>
-                    <input type="text" id="r_hfno" class="w-full p-2 border rounded">
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">HFNO</label>
+                    <input type="text" id="r_hfno" list="hfno_list" class="w-full p-3 border rounded-lg shadow-sm">
+                    <datalist id="hfno_list"></datalist>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Niv (PEEP-Ps)</label>
-                    <input type="text" id="r_niv" class="w-full p-2 border rounded">
+                <div class="col-span-2 md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">NIV</label>
+                    <input type="text" id="r_niv" list="niv_list" class="w-full p-3 border rounded-lg shadow-sm">
+                    <datalist id="niv_list"></datalist>
                 </div>
-                <div class="md:col-span-3 flex justify-end space-x-2 mt-4">
-                    <button type="button" onclick="closeModal('rilevazioneModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
-                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Salva</button>
+                <div class="col-span-2 md:col-span-3 flex justify-end space-x-2 mt-4">
+                    <button type="button" onclick="closeModal('rilevazioneModal')" class="flex-1 md:flex-none bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg">Annulla</button>
+                    <button type="submit" class="flex-1 md:flex-none bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg">Salva</button>
                 </div>
             </form>
         </div>
@@ -337,19 +362,16 @@ if (!isLoggedIn()): ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Tipo Post-Estubazione</label>
-                    <select id="e_tipo" class="w-full p-2 border rounded">
-                        <option value="Ossigeno standard">Ossigeno standard</option>
-                        <option value="HFNO">HFNO</option>
-                        <option value="NIV">NIV</option>
-                    </select>
+                    <input type="text" id="e_tipo" list="tipo_post_estubazione_list" class="w-full p-2 border rounded">
+                    <datalist id="tipo_post_estubazione_list"></datalist>
                 </div>
                 <div class="flex items-center">
                     <input type="checkbox" id="e_fallimento" class="mr-2">
                     <label class="text-sm font-medium text-gray-700">Fallimento IOT</label>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Ore da estubazione a failure</label>
-                    <input type="number" step="0.1" min="0" id="e_ore" class="w-full p-2 border rounded">
+                    <label class="block text-sm font-medium text-gray-700">Ore a failure (h)</label>
+                    <input type="number" inputmode="decimal" step="0.1" min="0" id="e_ore" oninput="validateParam('ore_da_estubazione_a_failure', this)" class="w-full p-2 border rounded">
                 </div>
                 <div class="md:col-span-2 flex justify-end space-x-2 mt-4">
                     <button type="button" onclick="closeModal('esitoModal')" class="bg-gray-300 px-4 py-2 rounded">Annulla</button>
@@ -366,6 +388,113 @@ if (!isLoggedIn()): ?>
         }
 
         const isAdmin = <?php echo isAdmin() ? 'true' : 'false'; ?>;
+        let clinicalRanges = [];
+        let tagLibrary = {};
+
+        async function loadRanges() {
+            const res = await fetch('api.php?action=ranges');
+            clinicalRanges = await res.json();
+        }
+
+        async function loadTagLibrary() {
+            const res = await fetch('api.php?action=tags');
+            const tags = await res.json();
+            tagLibrary = tags.reduce((acc, t) => {
+                acc[t.category] = acc[t.category] || [];
+                acc[t.category].push(t.name);
+                return acc;
+            }, {});
+
+            // Populate datalists
+            for (const [cat, names] of Object.entries(tagLibrary)) {
+                const dl = document.getElementById(cat + '_list');
+                if (dl) {
+                    dl.innerHTML = names.map(n => `<option value="${n}">`).join('');
+                }
+            }
+        }
+        loadRanges();
+        loadTagLibrary();
+
+        function handleTagInput(e, category, targetId) {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                const val = e.target.value.trim().replace(',', '');
+                if (val) addTagToField(category, val, targetId);
+                e.target.value = '';
+            }
+        }
+
+        async function addTagToField(category, name, targetId) {
+            const target = document.getElementById(targetId);
+            const current = target.value ? target.value.split(',').map(s => s.trim()) : [];
+            if (!current.includes(name)) {
+                current.push(name);
+                target.value = current.join(', ');
+                renderTags(category, targetId);
+
+                // Save to library if new
+                if (!tagLibrary[category] || !tagLibrary[category].includes(name)) {
+                    await fetch('api.php?action=tags', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ category, name })
+                    });
+                    loadTagLibrary();
+                }
+            }
+        }
+
+        function removeTagFromField(category, name, targetId) {
+            const target = document.getElementById(targetId);
+            const current = target.value.split(',').map(s => s.trim()).filter(s => s !== name);
+            target.value = current.join(', ');
+            renderTags(category, targetId);
+        }
+
+        function renderTags(category, targetId) {
+            const target = document.getElementById(targetId);
+            const container = document.getElementById(targetId + '_tags');
+            const suggContainer = document.getElementById(targetId + '_suggestions');
+            if (!container) return;
+
+            const current = target.value ? target.value.split(',').map(s => s.trim()) : [];
+            container.innerHTML = current.map(t => `
+                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                    ${t}
+                    <button type="button" onclick="removeTagFromField('${category}', '${t}', '${targetId}')" class="text-blue-500 hover:text-blue-700">
+                        <i class="ph ph-x-circle"></i>
+                    </button>
+                </span>
+            `).join('');
+
+            // Show suggestions from library not already in current
+            if (suggContainer && tagLibrary[category]) {
+                const suggestions = tagLibrary[category].filter(t => !current.includes(t));
+                suggContainer.innerHTML = suggestions.map(t => `
+                    <button type="button" onclick="addTagToField('${category}', '${t}', '${targetId}')" class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] hover:bg-gray-200">
+                        + ${t}
+                    </button>
+                `).join('');
+            }
+        }
+
+        function validateParam(param, input) {
+            const val = parseFloat(input.value);
+            const range = clinicalRanges.find(r => r.parameter === param);
+
+            input.classList.remove('range-ok', 'range-warning', 'range-critical');
+
+            if (isNaN(val) || !range) return;
+
+            if (val >= range.min_normal && val <= range.max_normal) {
+                input.classList.add('range-ok');
+            } else if (val >= range.min_critical && val <= range.max_critical) {
+                input.classList.add('range-warning');
+            } else {
+                input.classList.add('range-critical');
+            }
+        }
 
         function encrypt(text) {
             return CryptoJS.AES.encrypt(text, encryptionKey).toString();
@@ -385,7 +514,10 @@ if (!isLoggedIn()): ?>
             const h = parseFloat(document.getElementById('p_altezza').value);
             const w = parseFloat(document.getElementById('p_peso').value);
             if (h > 0 && w > 0) {
-                document.getElementById('p_bmi').value = (w / (h * h)).toFixed(2);
+                const bmi = (w / (h * h)).toFixed(2);
+                const input = document.getElementById('p_bmi');
+                input.value = bmi;
+                validateParam('bmi', input);
             }
         }
 
@@ -396,10 +528,16 @@ if (!isLoggedIn()): ?>
             const fio2 = parseFloat(document.getElementById('r_fio2').value);
 
             if (fr > 0 && tv > 0) {
-                document.getElementById('r_tobin').value = (fr / tv).toFixed(1);
+                const tobin = (fr / tv).toFixed(1);
+                const input = document.getElementById('r_tobin');
+                input.value = tobin;
+                validateParam('tobin_index', input);
             }
             if (fr > 0 && spo2 > 0 && fio2 > 0) {
-                document.getElementById('r_rox').value = ((spo2 / fio2) / fr).toFixed(2);
+                const rox = ((spo2 / fio2) / fr).toFixed(2);
+                const input = document.getElementById('r_rox');
+                input.value = rox;
+                validateParam('rox_index', input);
             }
         }
 
@@ -409,6 +547,7 @@ if (!isLoggedIn()): ?>
 
         function openPazienteModal(paziente = null) {
             document.getElementById('pazienteForm').reset();
+            document.querySelectorAll('#pazienteForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
             document.getElementById('p_id').value = '';
             if (paziente) {
                 document.getElementById('p_id').value = paziente.id;
@@ -418,6 +557,12 @@ if (!isLoggedIn()): ?>
                 document.getElementById('p_altezza').value = paziente.altezza;
                 document.getElementById('p_peso').value = paziente.peso;
                 document.getElementById('p_bmi').value = paziente.bmi;
+
+                // Validate
+                ['eta', 'altezza', 'peso', 'bmi'].forEach(p => {
+                    const input = document.getElementById('p_' + p);
+                    if (input) validateParam(p, input);
+                });
             }
             openModal('pazienteModal');
         }
@@ -457,6 +602,11 @@ if (!isLoggedIn()): ?>
 
         async function savePaziente(e) {
             e.preventDefault();
+
+            if (document.querySelectorAll('#pazienteForm .range-critical').length > 0) {
+                if (!confirm("Attenzione: alcuni dati del paziente sono fuori dai range critici. Procedere?")) return;
+            }
+
             const data = {
                 id: document.getElementById('p_id').value,
                 nome_cognome: encrypt(document.getElementById('p_nome').value),
@@ -539,23 +689,37 @@ if (!isLoggedIn()): ?>
 
         async function openInterventoModal(intervento = null) {
             document.getElementById('interventoForm').reset();
+            document.querySelectorAll('#interventoForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
             document.getElementById('i_id').value = '';
             document.getElementById('i_paziente_id').value = currentPazienteId;
             if (intervento) {
                 document.getElementById('i_id').value = intervento.id;
-                document.getElementById('i_comorbilita').value = intervento.comorbilita;
+                document.getElementById('i_comorbilita').value = intervento.comorbilita || '';
                 document.getElementById('i_asa').value = intervento.asa_score;
                 document.getElementById('i_tipo').value = intervento.tipo_intervento;
                 document.getElementById('i_urgenza').checked = intervento.urgenza == 1;
                 document.getElementById('i_euroscore').value = intervento.euroscore_ii;
                 document.getElementById('i_cec').value = intervento.durata_cec_ore;
                 document.getElementById('i_iot').value = intervento.timing_iot_h;
+
+                // Validate
+                ['asa_score', 'euroscore_ii', 'durata_cec_ore', 'timing_iot_h'].forEach(p => {
+                    const idMap = { 'asa_score': 'i_asa', 'euroscore_ii': 'i_euroscore', 'durata_cec_ore': 'i_cec', 'timing_iot_h': 'i_iot' };
+                    const input = document.getElementById(idMap[p]);
+                    if (input) validateParam(p, input);
+                });
             }
+            renderTags('comorbilita', 'i_comorbilita');
             openModal('interventoModal');
         }
 
         async function saveIntervento(e) {
             e.preventDefault();
+
+            if (document.querySelectorAll('#interventoForm .range-critical').length > 0) {
+                if (!confirm("Attenzione: alcuni parametri sono fuori dai range critici. Procedere?")) return;
+            }
+
             const data = {
                 id: document.getElementById('i_id').value,
                 paziente_id: document.getElementById('i_paziente_id').value,
@@ -622,6 +786,9 @@ if (!isLoggedIn()): ?>
 
         function openRilevazioneModal(intervento_id, r = null) {
             document.getElementById('rilevazioneForm').reset();
+            // Remove range classes
+            document.querySelectorAll('#rilevazioneForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
+
             document.getElementById('r_intervento_id').value = intervento_id;
             document.getElementById('r_id').value = '';
 
@@ -647,12 +814,34 @@ if (!isLoggedIn()): ?>
                 document.getElementById('r_venturi').value = r.maschera_venturi || '';
                 document.getElementById('r_hfno').value = r.hfno || '';
                 document.getElementById('r_niv').value = r.niv || '';
+
+                // Trigger validation for existing values
+                ['fr', 'tv', 'tobin_index', 'spo2', 'fio2', 'rox_index', 'peep', 'pressure_support', 'nrs_dolore', 'nas_score'].forEach(p => {
+                    const input = document.getElementById('r_' + (p === 'tobin_index' ? 'tobin' : (p === 'rox_index' ? 'rox' : (p === 'pressure_support' ? 'ps' : (p === 'nrs_dolore' ? 'dolore' : (p === 'nas_score' ? 'nas' : p))))));
+                    if (input) validateParam(p, input);
+                });
+                renderTags('maschera_venturi', 'r_venturi');
+                renderTags('hfno', 'r_hfno');
+                renderTags('niv', 'r_niv');
+            } else {
+                renderTags('maschera_venturi', 'r_venturi');
+                renderTags('hfno', 'r_hfno');
+                renderTags('niv', 'r_niv');
             }
             openModal('rilevazioneModal');
         }
 
         async function saveRilevazione(e) {
             e.preventDefault();
+
+            // Check for critical values
+            const criticals = document.querySelectorAll('.range-critical');
+            if (criticals.length > 0) {
+                if (!confirm("Attenzione: alcuni parametri sono fuori dai range critici. Vuoi procedere comunque con il salvataggio?")) {
+                    return;
+                }
+            }
+
             const int_id = document.getElementById('r_intervento_id').value;
             const data = {
                 id: document.getElementById('r_id').value,
@@ -721,20 +910,30 @@ if (!isLoggedIn()): ?>
 
         function openEsitoModal(intervento_id, e = null) {
             document.getElementById('esitoForm').reset();
+            document.querySelectorAll('#esitoForm input').forEach(el => el.classList.remove('range-ok', 'range-warning', 'range-critical'));
             document.getElementById('e_intervento_id').value = intervento_id;
             document.getElementById('e_id').value = '';
             if (e) {
                 document.getElementById('e_id').value = e.id;
                 document.getElementById('e_successo').checked = e.successo == 1;
-                document.getElementById('e_tipo').value = e.tipo_post_estubazione;
+                document.getElementById('e_tipo').value = e.tipo_post_estubazione || '';
                 document.getElementById('e_fallimento').checked = e.fallimento_iot == 1;
                 document.getElementById('e_ore').value = e.ore_da_estubazione_a_failure;
+
+                const input = document.getElementById('e_ore');
+                if (input) validateParam('ore_da_estubazione_a_failure', input);
             }
+            renderTags('tipo_post_estubazione', 'e_tipo');
             openModal('esitoModal');
         }
 
         async function saveEsito(e) {
             e.preventDefault();
+
+            if (document.querySelectorAll('#esitoForm .range-critical').length > 0) {
+                if (!confirm("Attenzione: parametri critici. Procedere?")) return;
+            }
+
             const int_id = document.getElementById('e_intervento_id').value;
             const data = {
                 id: document.getElementById('e_id').value,
