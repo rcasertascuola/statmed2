@@ -71,6 +71,10 @@ function isAdmin() {
     return isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 }
 
+function isLeader() {
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'leader';
+}
+
 function logout() {
     session_destroy();
 }

@@ -1,8 +1,8 @@
 <?php
 require_once 'auth.php';
 
-if (!isLoggedIn()) {
-    header('Location: login.php');
+if (!isLoggedIn() || isAdmin()) {
+    header('Location: index.php');
     exit;
 }
 
@@ -70,7 +70,7 @@ if ($current_team_id) {
                 <a href="stats.php" class="bg-purple-500 hover:bg-purple-600 p-2 rounded-full text-white transition" title="Statistiche">
                     <i class="ph ph-chart-line-up text-xl"></i>
                 </a>
-                <?php if (isAdmin()): ?>
+                <?php if (isAdmin() || isLeader()): ?>
                 <a href="settings.php" class="bg-gray-700 hover:bg-gray-800 p-2 rounded-full text-white transition" title="Impostazioni">
                     <i class="ph ph-gear text-xl"></i>
                 </a>

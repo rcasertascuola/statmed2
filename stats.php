@@ -1,6 +1,6 @@
 <?php
 require_once 'auth.php';
-if (!isLoggedIn()) { header('Location: index.php'); exit; }
+if (!isLoggedIn() || isAdmin()) { header('Location: index.php'); exit; }
 
 $db = getDB();
 

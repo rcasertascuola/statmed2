@@ -22,7 +22,7 @@ function logActivity($db, $action, $details) {
 
 // Permission Helpers
 function canEditPatient($db, $paziente_id) {
-    if (isAdmin()) return true;
+    if (isAdmin()) return false; // Admin cannot edit patient data
     global $user_id, $current_team_id;
     if (!$current_team_id) return false;
 
@@ -45,7 +45,7 @@ function canEditPatient($db, $paziente_id) {
 }
 
 function canDelete($db, $table, $id) {
-    if (isAdmin()) return true;
+    if (isAdmin()) return false; // Admin cannot delete patient data
     global $user_id, $current_team_id;
     if (!$current_team_id) return false;
 
@@ -97,7 +97,8 @@ function handlePazienti($db, $method) {
     global $user_id, $current_team_id;
     if ($method === 'GET') {
         if (isAdmin()) {
-            $stmt = $db->query("SELECT * FROM pazienti");
+            echo json_encode([]);
+            exit;
         } else {
             // Patients in current team
             $stmt = $db->prepare("
@@ -114,6 +115,7 @@ function handlePazienti($db, $method) {
         }
         echo json_encode($pazienti);
     } elseif ($method === 'POST') {
+        if (isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
         $data = json_decode(file_get_contents('php://input'), true);
         if (isset($data['id']) && !empty($data['id'])) {
             if (!canEditPatient($db, $data['id'])) { echo json_encode(['error' => 'Forbidden']); exit; }
@@ -145,6 +147,10 @@ function handlePazienti($db, $method) {
 function handleInterventi($db, $method) {
     global $user_id, $current_team_id;
     if ($method === 'GET') {
+        if (isAdmin()) {
+            echo json_encode([]);
+            exit;
+        }
         $paziente_id = $_GET['paziente_id'] ?? null;
         if ($paziente_id) {
             $stmt = $db->prepare("
@@ -155,12 +161,8 @@ function handleInterventi($db, $method) {
             ");
             $stmt->execute([$paziente_id]);
         } else {
-            if (isAdmin()) {
-                $stmt = $db->query("SELECT * FROM interventi");
-            } else {
-                $stmt = $db->prepare("SELECT i.* FROM interventi i JOIN patient_teams pt ON i.paziente_id = pt.paziente_id WHERE pt.team_id = ?");
-                $stmt->execute([$current_team_id]);
-            }
+            $stmt = $db->prepare("SELECT i.* FROM interventi i JOIN patient_teams pt ON i.paziente_id = pt.paziente_id WHERE pt.team_id = ?");
+            $stmt->execute([$current_team_id]);
         }
         $interventi = $stmt->fetchAll();
         foreach ($interventi as &$i) {
@@ -169,6 +171,7 @@ function handleInterventi($db, $method) {
         }
         echo json_encode($interventi);
     } elseif ($method === 'POST') {
+        if (isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
         $data = json_decode(file_get_contents('php://input'), true);
         if (isset($data['id']) && !empty($data['id'])) {
             // Check permission (creator or leader)
@@ -198,13 +201,17 @@ function handleInterventi($db, $method) {
 function handleRilevazioni($db, $method) {
     global $user_id;
     if ($method === 'GET') {
+        if (isAdmin()) {
+            echo json_encode([]);
+            exit;
+        }
         $intervento_id = $_GET['intervento_id'] ?? null;
         if ($intervento_id) {
             $stmt = $db->prepare("SELECT r.*, i.paziente_id FROM rilevazioni_cliniche r JOIN interventi i ON r.intervento_id = i.id WHERE r.intervento_id = ?");
             $stmt->execute([$intervento_id]);
         } else {
-            // This case might not be used in the new UI but for completeness:
-            $stmt = $db->query("SELECT * FROM rilevazioni_cliniche");
+            echo json_encode([]);
+            exit;
         }
         $rilevazioni = $stmt->fetchAll();
         foreach ($rilevazioni as &$r) {
@@ -213,6 +220,7 @@ function handleRilevazioni($db, $method) {
         }
         echo json_encode($rilevazioni);
     } elseif ($method === 'POST') {
+        if (isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
         $data = json_decode(file_get_contents('php://input'), true);
         if (isset($data['id']) && !empty($data['id'])) {
             if (!canDelete($db, 'rilevazioni_cliniche', $data['id'])) { echo json_encode(['error' => 'Forbidden']); exit; }
@@ -239,12 +247,17 @@ function handleRilevazioni($db, $method) {
 function handleEsito($db, $method) {
     global $user_id;
     if ($method === 'GET') {
+        if (isAdmin()) {
+            echo json_encode([]);
+            exit;
+        }
         $intervento_id = $_GET['intervento_id'] ?? null;
         if ($intervento_id) {
             $stmt = $db->prepare("SELECT e.*, i.paziente_id FROM esito_weaning e JOIN interventi i ON e.intervento_id = i.id WHERE e.intervento_id = ?");
             $stmt->execute([$intervento_id]);
         } else {
-            $stmt = $db->query("SELECT * FROM esito_weaning");
+            echo json_encode([]);
+            exit;
         }
         $esiti = $stmt->fetchAll();
         foreach ($esiti as &$e) {
@@ -253,6 +266,7 @@ function handleEsito($db, $method) {
         }
         echo json_encode($esiti);
     } elseif ($method === 'POST') {
+        if (isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
         $data = json_decode(file_get_contents('php://input'), true);
         if (isset($data['id']) && !empty($data['id'])) {
             if (!canDelete($db, 'esito_weaning', $data['id'])) { echo json_encode(['error' => 'Forbidden']); exit; }
@@ -277,6 +291,10 @@ function handleEsito($db, $method) {
 
 function handleAllData($db) {
     global $current_team_id;
+    if (isAdmin()) {
+        echo json_encode([]);
+        exit;
+    }
     // Join all tables for CSV export
     $sql = "SELECT p.*, i.comorbilita, i.asa_score, i.tipo_intervento, i.urgenza, i.euroscore_ii, i.durata_cec_ore, i.timing_iot_h,
             r.fase, r.fr, r.tv, r.tobin_index, r.spo2, r.fio2, r.rox_index, r.peep, r.pressure_support, r.nrs_dolore, r.nas_score, r.maschera_venturi, r.hfno, r.niv, r.data_ora,
@@ -286,13 +304,9 @@ function handleAllData($db) {
             LEFT JOIN rilevazioni_cliniche r ON i.id = r.intervento_id
             LEFT JOIN esito_weaning e ON i.id = e.intervento_id";
 
-    if (!isAdmin()) {
-        $sql .= " JOIN patient_teams pt ON p.id = pt.paziente_id WHERE pt.team_id = ?";
-        $stmt = $db->prepare($sql);
-        $stmt->execute([$current_team_id]);
-    } else {
-        $stmt = $db->query($sql);
-    }
+    $sql .= " JOIN patient_teams pt ON p.id = pt.paziente_id WHERE pt.team_id = ?";
+    $stmt = $db->prepare($sql);
+    $stmt->execute([$current_team_id]);
 
     echo json_encode($stmt->fetchAll());
 }
@@ -302,7 +316,7 @@ function handleRanges($db, $method) {
         $stmt = $db->query("SELECT * FROM clinical_ranges ORDER BY category, parameter");
         echo json_encode($stmt->fetchAll());
     } elseif ($method === 'POST') {
-        if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
+        if (!isAdmin() && !isLeader()) { echo json_encode(['error' => 'Forbidden']); exit; }
         $data = json_decode(file_get_contents('php://input'), true);
         $stmt = $db->prepare("UPDATE clinical_ranges SET min_normal=?, max_normal=?, min_critical=?, max_critical=?, step=?, unit=? WHERE parameter=?");
         $stmt->execute([
@@ -321,7 +335,7 @@ function handleRanges($db, $method) {
 
 function handleRenameTag($db, $method) {
     if ($method !== 'POST') return;
-    if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
+    if (!isAdmin() && !isLeader()) { echo json_encode(['error' => 'Forbidden']); exit; }
 
     $data = json_decode(file_get_contents('php://input'), true);
     $oldName = $data['old_name'];
@@ -406,7 +420,7 @@ function handleTags($db, $method) {
         $stmt->execute([$data['category'], $data['name']]);
         echo json_encode(['success' => true]);
     } elseif ($method === 'DELETE') {
-        if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
+        if (!isAdmin() && !isLeader()) { echo json_encode(['error' => 'Forbidden']); exit; }
         $id = $_GET['id'];
         $stmt = $db->prepare("DELETE FROM tag_library WHERE id = ?");
         $stmt->execute([$id]);

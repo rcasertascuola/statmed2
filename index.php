@@ -12,8 +12,14 @@ $user_id = $_SESSION['user_id'];
 // Get user teams
 $teams = getUserTeams($user_id);
 
-// If user belongs to only one team and is a leader, we might already have the key
-$current_team_id = $_SESSION['active_team_id'] ?? (count($teams) === 1 ? $teams[0]['id'] : null);
+// Admin doesn't need teams or keys
+if (isAdmin()) {
+    $current_team_id = null;
+    $team_key = null;
+} else {
+    // If user belongs to only one team and is a leader, we might already have the key
+    $current_team_id = $_SESSION['active_team_id'] ?? (count($teams) === 1 ? $teams[0]['id'] : null);
+}
 
 if ($current_team_id) {
     $_SESSION['active_team_id'] = $current_team_id;
@@ -78,11 +84,27 @@ if (isset($_GET['change_team'])) {
     </nav>
 
     <main class="container mx-auto p-4 md:p-8">
-        <?php if (empty($teams) && !isAdmin()): ?>
+        <?php if (isAdmin()): ?>
+            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                    <i class="ph ph-shield-check text-blue-600"></i> Pannello Amministrativo
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <a href="settings.php" class="bg-gray-800 text-white p-6 rounded-xl shadow-md hover:bg-gray-900 transition flex items-center gap-4">
+                        <i class="ph ph-gear-six text-3xl"></i>
+                        <div>
+                            <div class="font-bold text-lg">Configurazione</div>
+                            <div class="text-xs opacity-70">Utenti, Ospedali ed Equipe</div>
+                        </div>
+                    </a>
+                    <!-- Add more admin only links if needed -->
+                </div>
+            </div>
+        <?php elseif (empty($teams)): ?>
             <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
                 <p>Non sei ancora associato a nessuna equipe. Contatta l'amministratore.</p>
             </div>
-        <?php elseif (!$current_team_id && !isAdmin()): ?>
+        <?php elseif (!$current_team_id): ?>
             <div class="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
                 <h2 class="text-xl font-bold mb-4">Seleziona Equipe</h2>
                 <form method="POST">
@@ -95,7 +117,7 @@ if (isset($_GET['change_team'])) {
                     <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Seleziona</button>
                 </form>
             </div>
-        <?php elseif (!$team_key && !isAdmin()): ?>
+        <?php elseif (!$team_key): ?>
             <div class="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
                 <h2 class="text-xl font-bold mb-4">Inserisci Chiave Equipe</h2>
                 <p class="text-sm text-gray-600 mb-4">L'equipe selezionata richiede una chiave di cifratura per accedere ai dati sensibili.</p>
@@ -114,9 +136,9 @@ if (isset($_GET['change_team'])) {
                 <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
                     <h3 class="text-gray-500 text-sm font-bold uppercase">Pazienti Totali</h3>
                     <p class="text-3xl font-bold"><?php
-                        $q = isAdmin() ? "SELECT COUNT(*) FROM pazienti" : "SELECT COUNT(*) FROM patient_teams WHERE team_id = ?";
+                        $q = "SELECT COUNT(*) FROM patient_teams WHERE team_id = ?";
                         $stmt = $db->prepare($q);
-                        isAdmin() ? $stmt->execute() : $stmt->execute([$current_team_id]);
+                        $stmt->execute([$current_team_id]);
                         echo $stmt->fetchColumn();
                     ?></p>
                 </div>
@@ -131,9 +153,9 @@ if (isset($_GET['change_team'])) {
                 <div class="bg-white p-6 rounded-lg shadow border-l-4 border-purple-500">
                     <h3 class="text-gray-500 text-sm font-bold uppercase">Interventi Recenti</h3>
                     <p class="text-3xl font-bold"><?php
-                        $q = isAdmin() ? "SELECT COUNT(*) FROM interventi" : "SELECT COUNT(*) FROM interventi i JOIN patient_teams pt ON i.paziente_id = pt.paziente_id WHERE pt.team_id = ?";
+                        $q = "SELECT COUNT(*) FROM interventi i JOIN patient_teams pt ON i.paziente_id = pt.paziente_id WHERE pt.team_id = ?";
                         $stmt = $db->prepare($q);
-                        isAdmin() ? $stmt->execute() : $stmt->execute([$current_team_id]);
+                        $stmt->execute([$current_team_id]);
                         echo $stmt->fetchColumn();
                     ?></p>
                 </div>
@@ -154,13 +176,13 @@ if (isset($_GET['change_team'])) {
                     </div>
                     <i class="ph ph-chart-bar text-4xl"></i>
                 </a>
-                <?php if (isAdmin()): ?>
+                <?php if (isLeader()): ?>
                 <a href="settings.php" class="flex-1 min-w-[200px] bg-gray-800 text-white p-6 rounded-xl shadow-lg hover:bg-gray-900 transition flex items-center justify-between">
                     <div>
-                        <h4 class="text-xl font-bold">Impostazioni</h4>
-                        <p class="text-sm opacity-80">Configurazione sistema</p>
+                        <h4 class="text-xl font-bold">Equipe</h4>
+                        <p class="text-sm opacity-80">Gestione team e range</p>
                     </div>
-                    <i class="ph ph-gear text-4xl"></i>
+                    <i class="ph ph-users-four text-4xl"></i>
                 </a>
                 <?php endif; ?>
             </div>
