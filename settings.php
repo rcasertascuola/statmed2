@@ -46,10 +46,10 @@ if (!isAdmin()) { header('Location: index.php'); exit; }
         <!-- Tag Library Tab -->
         <div id="tags-tab" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-lg p-6">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <h2 class="text-lg font-bold text-gray-700">Gestione Tag</h2>
-                    <div class="flex gap-2">
-                        <select id="tag-category-select" class="p-2 border rounded text-sm">
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                        <select id="tag-category-select" class="flex-1 md:w-48 p-2 border rounded text-sm">
                             <option value="tipo_intervento">Tipo Intervento</option>
                             <option value="comorbilita">Comorbidità</option>
                             <option value="maschera_venturi">Maschera Venturi</option>
@@ -57,8 +57,8 @@ if (!isAdmin()) { header('Location: index.php'); exit; }
                             <option value="niv">NIV</option>
                             <option value="tipo_post_estubazione">Post-Estubazione</option>
                         </select>
-                        <input type="text" id="new-tag-name" placeholder="Nuovo tag..." class="p-2 border rounded text-sm">
-                        <button onclick="addTag()" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Aggiungi</button>
+                        <input type="text" id="new-tag-name" placeholder="Nuovo tag..." class="flex-1 md:w-48 p-2 border rounded text-sm">
+                        <button onclick="addTag()" class="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 whitespace-nowrap">Aggiungi</button>
                     </div>
                 </div>
 

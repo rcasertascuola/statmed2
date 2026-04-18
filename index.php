@@ -667,6 +667,7 @@ if (!isLoggedIn()): ?>
                     <div class="text-sm text-gray-600 mb-2">
                         Euroscore: ${i.euroscore_ii} | CEC: ${i.durata_cec_ore}h | IOT: ${i.timing_iot_h}h
                     </div>
+                    ${i.comorbilita ? `<div class="text-xs text-gray-500 mb-2"><strong>Comorbidità:</strong> ${i.comorbilita}</div>` : ''}
                     <div class="ml-4">
                         <h5 class="font-semibold text-xs border-b mb-1 flex justify-between">
                             Rilevazioni Cliniche
@@ -747,6 +748,18 @@ if (!isLoggedIn()): ?>
             }
         }
 
+        function toggleRilevazione(id) {
+            const content = document.getElementById(`rilevazione-content-${id}`);
+            const isHidden = content.classList.contains('hidden');
+
+            // Close all others
+            document.querySelectorAll('[id^="rilevazione-content-"]').forEach(el => el.classList.add('hidden'));
+
+            if (isHidden) {
+                content.classList.remove('hidden');
+            }
+        }
+
         async function loadRilevazioni(intervento_id) {
             const res = await fetch(`api.php?action=rilevazioni&intervento_id=${intervento_id}`);
             const rilevazioni = await res.json();
@@ -754,7 +767,8 @@ if (!isLoggedIn()): ?>
             div.innerHTML = '';
             rilevazioni.forEach(r => {
                 const item = document.createElement('div');
-                item.className = 'text-xs bg-white p-1 rounded border flex justify-between items-center';
+                item.className = 'mb-1 border rounded overflow-hidden';
+
                 const tobinWarning = r.tobin_index > 105 ? 'text-red-600 font-bold' : (r.tobin_index > 80 ? 'text-orange-500' : '');
                 const roxWarning = r.rox_index < 3.85 ? 'text-red-600 font-bold' : '';
 
@@ -764,21 +778,39 @@ if (!isLoggedIn()): ?>
                 if(r.niv) extra += ` NIV: ${r.niv}`;
 
                 item.innerHTML = `
-                    <span class="truncate pr-2">
-                        <strong>${r.fase}:</strong> FR ${r.fr}, TV ${r.tv},
-                        Tobin: <span class="${tobinWarning}">${r.tobin_index}</span>,
-                        ROX: <span class="${roxWarning}">${r.rox_index}</span>,
-                        SpO2 ${r.spo2}%, NRS ${r.nrs_dolore} ${extra}
-                    </span>
-                    <span class="space-x-1 flex-shrink-0">
-                        <button onclick='openRilevazioneModal(${intervento_id}, ${JSON.stringify(r).replace(/'/g, "&apos;")})' class="text-yellow-600" title="Modifica">
-                            <i class="ph ph-pencil-line"></i>
-                        </button>
-                        ${isAdmin ? `
-                        <button onclick="deleteRilevazione(${r.id}, ${intervento_id})" class="text-red-500" title="Elimina">
-                            <i class="ph ph-trash"></i>
-                        </button>` : ''}
-                    </span>
+                    <div class="flex justify-between items-center bg-white p-2 cursor-pointer hover:bg-gray-50" onclick="toggleRilevazione(${r.id})">
+                        <span class="text-xs truncate pr-2 flex-1">
+                            <strong>${r.fase}:</strong> FR ${r.fr}, TV ${r.tv},
+                            Tobin: <span class="${tobinWarning}">${r.tobin_index}</span>,
+                            ROX: <span class="${roxWarning}">${r.rox_index}</span>,
+                            SpO2 ${r.spo2}%, NRS ${r.nrs_dolore} ${extra}
+                        </span>
+                        <div class="flex items-center space-x-2 ml-2" onclick="event.stopPropagation()">
+                            <button onclick='openRilevazioneModal(${intervento_id}, ${JSON.stringify(r).replace(/'/g, "&apos;")})' class="text-yellow-600 p-1" title="Modifica">
+                                <i class="ph ph-pencil-line"></i>
+                            </button>
+                            ${isAdmin ? `
+                            <button onclick="deleteRilevazione(${r.id}, ${intervento_id})" class="text-red-500 p-1" title="Elimina">
+                                <i class="ph ph-trash"></i>
+                            </button>` : ''}
+                        </div>
+                    </div>
+                    <div id="rilevazione-content-${r.id}" class="hidden p-3 bg-gray-50 border-t grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">Data/Ora:</span><br>${r.data_ora}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">FR:</span><br>${r.fr} bpm</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">TV:</span><br>${r.tv} L</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">Tobin:</span><br>${r.tobin_index}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">SpO2:</span><br>${r.spo2}%</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">FiO2:</span><br>${r.fio2}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">ROX:</span><br>${r.rox_index}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">PEEP:</span><br>${r.peep}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">Pres. Supp.:</span><br>${r.pressure_support}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">NRS Dolore:</span><br>${r.nrs_dolore}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">NAS Score:</span><br>${r.nas_score}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">Venturi:</span><br>${r.maschera_venturi || '-'}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">HFNO:</span><br>${r.hfno || '-'}</div>
+                        <div><span class="text-gray-500 uppercase font-bold text-[10px]">NIV:</span><br>${r.niv || '-'}</div>
+                    </div>
                 `;
                 div.appendChild(item);
             });
