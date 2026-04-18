@@ -34,6 +34,9 @@ switch ($action) {
     case 'all_data':
         handleAllData($db);
         break;
+    case 'ranges':
+        handleRanges($db, $method);
+        break;
     default:
         echo json_encode(['error' => 'Invalid action']);
         break;
@@ -172,5 +175,27 @@ function handleAllData($db) {
             LEFT JOIN esito_weaning e ON i.id = e.intervento_id";
     $stmt = $db->query($sql);
     echo json_encode($stmt->fetchAll());
+}
+
+function handleRanges($db, $method) {
+    if ($method === 'GET') {
+        $stmt = $db->query("SELECT * FROM clinical_ranges");
+        echo json_encode($stmt->fetchAll());
+    } elseif ($method === 'POST') {
+        if (!isAdmin()) { echo json_encode(['error' => 'Forbidden']); exit; }
+        $data = json_decode(file_get_contents('php://input'), true);
+        $stmt = $db->prepare("UPDATE clinical_ranges SET min_normal=?, max_normal=?, min_critical=?, max_critical=?, step=?, unit=? WHERE parameter=?");
+        $stmt->execute([
+            $data['min_normal'] ?? 0,
+            $data['max_normal'] ?? 0,
+            $data['min_critical'] ?? 0,
+            $data['max_critical'] ?? 0,
+            $data['step'] ?? 0.1,
+            $data['unit'] ?? '',
+            $data['parameter'] ?? ''
+        ]);
+        logActivity($db, 'UPDATE_RANGE', "Parametro: " . ($data['parameter'] ?? 'unknown'));
+        echo json_encode(['success' => true]);
+    }
 }
 ?>
