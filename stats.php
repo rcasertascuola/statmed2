@@ -42,9 +42,12 @@ foreach ($data as &$row) {
 </head>
 <body class="bg-gray-100 min-h-screen">
     <nav class="bg-purple-700 text-white p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-xl font-bold flex items-center gap-2">
-            <i class="ph ph-presentation-chart"></i> StatMed2 Analytics
-        </h1>
+        <div class="flex items-center gap-2">
+            <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="ph ph-presentation-chart"></i> StatMed2 Analytics
+            </h1>
+        </div>
         <div class="flex items-center space-x-2">
             <a href="index.php" class="bg-white text-purple-700 px-4 py-1 rounded-full font-bold text-sm hover:bg-purple-50 transition">
                 Dashboard

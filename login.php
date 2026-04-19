@@ -29,7 +29,10 @@ if (!isLoggedIn()): ?>
 </head>
 <body class="bg-gray-100 h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded shadow-md w-96">
-        <h1 class="text-2xl font-bold mb-6 text-center">StatMed2 Login</h1>
+        <div class="flex flex-col items-center mb-6">
+            <img src="assets/logo_large.png" alt="StatMed2 Logo" class="h-20 w-auto mb-2">
+            <h1 class="text-xl font-bold text-gray-700">Login</h1>
+        </div>
         <?php if (isset($error)): ?>
             <p class="text-red-500 mb-4"><?php echo $error; ?></p>
         <?php endif; ?>
