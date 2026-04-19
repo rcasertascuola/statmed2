@@ -155,16 +155,34 @@ if (isAdmin()) {
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-gray-800 text-white p-4 shadow-lg flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <a href="index.php" class="hover:text-gray-300 transition">
-                <i class="ph ph-house text-2xl"></i>
-            </a>
-            <div class="flex items-center gap-2"><img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto"><span class="text-xl font-bold">Amministrazione</span></div>
-        </div>
-        <div class="flex items-center gap-4">
-            <span class="text-sm"><?php echo isAdmin() ? 'Admin' : 'Leader'; ?>: <strong><?php echo $_SESSION['name']; ?></strong></span>
-            <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-sm">Esci</a>
+    <nav class="bg-gray-800 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <div class="flex items-center gap-4">
+                    <a href="index.php" class="hover:text-gray-300 transition">
+                        <i class="ph ph-house text-2xl"></i>
+                    </a>
+                    <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
+                    <span class="text-xl font-bold">Amministrazione</span>
+                </div>
+                <div class="flex items-center gap-2 md:hidden">
+                    <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
+                        <i class="ph ph-sign-out text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center justify-center md:justify-between w-full md:w-auto gap-4">
+                <span class="text-sm">
+                    <?php echo isAdmin() ? 'Admin' : 'Leader'; ?>:
+                    <strong class="hidden md:inline"><?php echo htmlspecialchars($_SESSION['name']); ?></strong>
+                    <strong class="md:hidden"><?php echo htmlspecialchars(explode(' ', trim($_SESSION['name']))[0]); ?></strong>
+                </span>
+                <div class="hidden md:flex items-center space-x-2">
+                    <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
+                        <i class="ph ph-sign-out text-xl"></i>
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
 
