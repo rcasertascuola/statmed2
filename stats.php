@@ -45,8 +45,7 @@ foreach ($data as &$row) {
         <div class="container mx-auto">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <a href="index.php" class="flex items-center gap-2 hover:text-blue-200 transition" title="Dashboard">
-                        <i class="ph ph-gauge text-2xl"></i>
+                    <a href="index.php" class="hover:opacity-80 transition" title="Dashboard">
                         <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
                     </a>
                 </div>
@@ -58,6 +57,9 @@ foreach ($data as &$row) {
 
                 <div class="flex items-center">
                     <div class="hidden md:flex items-center gap-2">
+                        <a href="index.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Dashboard">
+                            <i class="ph ph-gauge text-xl"></i>
+                        </a>
                         <a href="pazienti.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Pazienti">
                             <i class="ph ph-users text-xl"></i>
                         </a>
@@ -81,6 +83,10 @@ foreach ($data as &$row) {
         </div>
         <div id="mobileMenu" class="hidden absolute top-full left-0 w-full bg-blue-700 shadow-xl md:hidden">
             <div class="flex flex-col p-2">
+                <a href="index.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
+                    <i class="ph ph-gauge text-xl"></i>
+                    <span>Dashboard</span>
+                </a>
                 <a href="pazienti.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
                     <i class="ph ph-users text-xl"></i>
                     <span>Pazienti</span>

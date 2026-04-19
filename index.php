@@ -78,8 +78,7 @@ if (isset($_GET['change_team'])) {
         <div class="container mx-auto">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <a href="index.php" class="flex items-center gap-2 hover:text-blue-200 transition" title="Dashboard">
-                        <i class="ph ph-gauge text-2xl"></i>
+                    <a href="index.php" class="hover:opacity-80 transition" title="Dashboard">
                         <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
                     </a>
                 </div>
@@ -91,6 +90,9 @@ if (isset($_GET['change_team'])) {
 
                 <div class="flex items-center">
                     <div class="hidden md:flex items-center gap-2">
+                        <a href="index.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Dashboard">
+                            <i class="ph ph-gauge text-xl"></i>
+                        </a>
                         <a href="pazienti.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Pazienti">
                             <i class="ph ph-users text-xl"></i>
                         </a>
@@ -135,6 +137,10 @@ if (isset($_GET['change_team'])) {
         </div>
         <div id="mobileMenu" class="hidden absolute top-full left-0 w-full bg-blue-700 shadow-xl md:hidden">
             <div class="flex flex-col p-2">
+                <a href="index.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
+                    <i class="ph ph-gauge text-xl"></i>
+                    <span>Dashboard</span>
+                </a>
                 <a href="pazienti.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
                     <i class="ph ph-users text-xl"></i>
                     <span>Pazienti</span>
@@ -170,20 +176,14 @@ if (isset($_GET['change_team'])) {
     <main class="container mx-auto p-4 md:p-8">
 
         <?php if (isAdmin()): ?>
-            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-                    <i class="ph ph-shield-check text-blue-600"></i> Pannello Amministrativo
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <a href="settings.php" class="bg-gray-800 text-white p-6 rounded-xl shadow-md hover:bg-gray-900 transition flex items-center gap-4">
-                        <i class="ph ph-gear-six text-3xl"></i>
-                        <div>
-                            <div class="font-bold text-lg">Configurazione</div>
-                            <div class="text-xs opacity-70">Utenti, Ospedali ed Equipe</div>
-                        </div>
-                    </a>
-                    <!-- Add more admin only links if needed -->
-                </div>
+            <div class="flex flex-wrap gap-4 mb-8">
+                <a href="settings.php" class="flex-1 min-w-[200px] bg-black text-white p-6 rounded-xl shadow-lg hover:bg-gray-900 transition flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xl font-bold">Configurazione</h4>
+                        <p class="text-sm opacity-80">Utenti, Ospedali ed Equipe</p>
+                    </div>
+                    <i class="ph ph-gear-six text-4xl"></i>
+                </a>
             </div>
         <?php elseif (empty($teams)): ?>
             <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
