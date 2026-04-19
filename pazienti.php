@@ -174,6 +174,10 @@ if ($current_team_id) {
                     <label class="block text-sm font-medium text-gray-700">Nome e Cognome</label>
                     <input type="text" id="p_nome" class="w-full p-2 border rounded" required>
                 </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Codice Fiscale (opzionale)</label>
+                    <input type="text" id="p_cf" class="w-full p-2 border rounded uppercase">
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Sesso (M/F)</label>
                     <select id="p_sesso" class="w-full p-2 border rounded" required>
@@ -588,6 +592,7 @@ if ($current_team_id) {
             if (paziente) {
                 document.getElementById('p_id').value = paziente.id;
                 document.getElementById('p_nome').value = decrypt(paziente.nome_cognome);
+                document.getElementById('p_cf').value = paziente.codice_fiscale ? decrypt(paziente.codice_fiscale) : '';
                 document.getElementById('p_sesso').value = paziente.sesso;
                 document.getElementById('p_eta').value = paziente.eta;
                 document.getElementById('p_altezza').value = paziente.altezza;
@@ -635,6 +640,7 @@ if ($current_team_id) {
             const data = {
                 id: document.getElementById('p_id').value,
                 nome_cognome: encrypt(document.getElementById('p_nome').value),
+                codice_fiscale: document.getElementById('p_cf').value ? encrypt(document.getElementById('p_cf').value.toUpperCase()) : null,
                 sesso: document.getElementById('p_sesso').value,
                 eta: document.getElementById('p_eta').value,
                 altezza: document.getElementById('p_altezza').value,
@@ -1003,6 +1009,7 @@ if ($current_team_id) {
             const decryptedData = data.map(function(row) {
                 const r = Object.assign({}, row);
                 r.nome_cognome = decrypt(row.nome_cognome);
+                r.codice_fiscale = row.codice_fiscale ? decrypt(row.codice_fiscale) : '';
                 return r;
             });
             const headers = Object.keys(decryptedData[0]);

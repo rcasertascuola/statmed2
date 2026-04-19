@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS teams (
     name VARCHAR(255) NOT NULL,
     leader_id INT,
     encrypted_team_key TEXT,
+    team_key_hash VARCHAR(255),
     FOREIGN KEY (leader_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS user_teams (
 CREATE TABLE IF NOT EXISTS pazienti (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome_cognome TEXT NOT NULL,
+    codice_fiscale TEXT,
     sesso VARCHAR(1) CHECK (sesso IN ('M', 'F')),
     eta INT,
     altezza REAL,
