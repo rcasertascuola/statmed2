@@ -273,28 +273,58 @@ if (isAdmin()) {
                             $stmt = $db->prepare("SELECT operative_unit_id FROM team_operative_units WHERE team_id = ?");
                             $stmt->execute([$t['id']]);
                             $active_ous = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                            // Fetch members of this team
+                            $stmt = $db->prepare("
+                                SELECT u.name, u.username, ut.can_edit_all, u.id as user_id
+                                FROM users u
+                                JOIN user_teams ut ON u.id = ut.user_id
+                                WHERE ut.team_id = ?
+                                UNION
+                                SELECT name, username, 1 as can_edit_all, id as user_id
+                                FROM users
+                                WHERE id = ?
+                            ");
+                            $stmt->execute([$t['id'], $t['leader_id']]);
+                            $members = $stmt->fetchAll();
                         ?>
-                        <form method="POST" class="space-y-4 p-4 border rounded bg-gray-50 mb-4">
-                            <input type="hidden" name="action" value="update_team">
-                            <input type="hidden" name="team_id" value="<?php echo $t['id']; ?>">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Equipe</label>
-                                <input type="text" name="name" value="<?php echo htmlspecialchars($t['name']); ?>" class="w-full p-2 border rounded" required>
+                        <div class="p-4 border rounded bg-gray-50 mb-4">
+                            <form method="POST" class="space-y-4 mb-4">
+                                <input type="hidden" name="action" value="update_team">
+                                <input type="hidden" name="team_id" value="<?php echo $t['id']; ?>">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Equipe</label>
+                                    <input type="text" name="name" value="<?php echo htmlspecialchars($t['name']); ?>" class="w-full p-2 border rounded" required>
+                                </div>
+                                <div class="text-sm font-bold text-gray-600">Unità Operative associate:</div>
+                                <div class="grid grid-cols-2 gap-2 text-xs max-h-32 overflow-y-auto border p-2 rounded bg-white">
+                                    <?php
+                                    // Fetch all OUs to let leader choose from
+                                    $all_ous = $db->query("SELECT ou.*, h.name as hospital_name FROM operative_units ou JOIN hospitals h ON ou.hospital_id = h.id")->fetchAll();
+                                    foreach ($all_ous as $ou): ?>
+                                        <label class="flex items-center gap-1">
+                                            <input type="checkbox" name="ou_ids[]" value="<?php echo $ou['id']; ?>" <?php echo in_array($ou['id'], $active_ous) ? 'checked' : ''; ?>>
+                                            <?php echo htmlspecialchars($ou['name']); ?> (<?php echo htmlspecialchars($ou['hospital_name']); ?>)
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded text-sm">Salva Modifiche</button>
+                            </form>
+
+                            <div class="mt-4 border-t pt-4">
+                                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Membri dell'Equipe</h4>
+                                <ul class="text-xs space-y-1">
+                                    <?php foreach ($members as $m): ?>
+                                        <li class="flex justify-between items-center bg-white p-1 rounded px-2 border border-gray-100">
+                                            <span><?php echo htmlspecialchars($m['name'] ?? $m['username']); ?></span>
+                                            <span class="text-[10px] text-gray-400 font-bold uppercase">
+                                                <?php echo $m['user_id'] == $t['leader_id'] ? 'Capo' : ($m['can_edit_all'] ? 'Editor' : 'User'); ?>
+                                            </span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
                             </div>
-                            <div class="text-sm font-bold text-gray-600">Unità Operative associate:</div>
-                            <div class="grid grid-cols-2 gap-2 text-xs max-h-32 overflow-y-auto border p-2 rounded bg-white">
-                                <?php
-                                // Fetch all OUs to let leader choose from
-                                $all_ous = $db->query("SELECT ou.*, h.name as hospital_name FROM operative_units ou JOIN hospitals h ON ou.hospital_id = h.id")->fetchAll();
-                                foreach ($all_ous as $ou): ?>
-                                    <label class="flex items-center gap-1">
-                                        <input type="checkbox" name="ou_ids[]" value="<?php echo $ou['id']; ?>" <?php echo in_array($ou['id'], $active_ous) ? 'checked' : ''; ?>>
-                                        <?php echo htmlspecialchars($ou['name']); ?> (<?php echo htmlspecialchars($ou['hospital_name']); ?>)
-                                    </label>
-                                <?php endforeach; ?>
-                            </div>
-                            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded text-sm">Salva Modifiche</button>
-                        </form>
+                        </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </section>
