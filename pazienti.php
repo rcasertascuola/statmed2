@@ -125,7 +125,6 @@ if ($current_team_id) {
             <table class="w-full text-left border-collapse text-sm md:text-base">
                 <thead>
                     <tr class="bg-gray-100 border-b">
-                        <th class="p-2 md:p-4">ID</th>
                         <th class="p-2 md:p-4">Paziente</th>
                         <th class="p-2 md:p-4">S</th>
                         <th class="p-2 md:p-4">Età</th>
@@ -184,7 +183,8 @@ if ($current_team_id) {
     <!-- Interventi/Rilevazioni Modal -->
     <div id="detailsModal" class="modal">
         <div class="modal-content max-w-4xl">
-            <h3 class="text-xl font-bold mb-4">Dettagli Clinici: <span id="detailPazienteNome"></span></h3>
+            <h3 class="text-xl font-bold mb-1">Dettagli Clinici: <span id="detailPazienteNome"></span></h3>
+            <div id="detailPazienteInfo" class="text-xs text-gray-500 mb-4"></div>
 
             <div class="mb-6">
                 <h4 class="font-bold border-b mb-2 flex justify-between">
@@ -576,8 +576,7 @@ if ($current_team_id) {
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-gray-50';
                 const pData = JSON.stringify(p).replace(/'/g, "&apos;");
-                row.innerHTML = '<td class="p-2 md:p-4">' + p.id + '</td>' +
-                    '<td class="p-2 md:p-4 font-medium">' + decrypt(p.nome_cognome) + '</td>' +
+                row.innerHTML = '<td class="p-2 md:p-4 font-medium">' + decrypt(p.nome_cognome) + '</td>' +
                     '<td class="p-2 md:p-4">' + p.sesso + '</td>' +
                     '<td class="p-2 md:p-4">' + p.eta + '</td>' +
                     '<td class="p-2 md:p-4">' + p.bmi + '</td>' +
@@ -628,6 +627,7 @@ if ($current_team_id) {
         async function viewDetails(p) {
             currentPazienteId = p.id;
             document.getElementById('detailPazienteNome').innerText = decrypt(p.nome_cognome);
+            document.getElementById('detailPazienteInfo').innerText = "Equipe: " + (p.team_name || 'N/D') + " | U.O.: " + (p.first_ou_name || 'N/D') + " | Inserito da: " + (p.creator_name || 'N/D');
             await loadInterventi();
             openModal('detailsModal');
         }
@@ -645,7 +645,8 @@ if ($current_team_id) {
                 div.innerHTML = '<div class="flex justify-between items-start mb-2">' +
                     '<div>' +
                         '<strong>' + intv.tipo_intervento + '</strong> - ASA: ' + intv.asa_score + ' - ' + (intv.urgenza == 1 ? 'URGENTE' : 'Elezione') +
-                        '<br><span class="text-xs text-blue-600">' + (intv.uo_name || '') + '</span>' +
+                        '<br><span class="text-[10px] text-blue-600 uppercase font-bold">' + (intv.team_name || 'Equipe N/D') + ' | ' + (intv.uo_name || 'U.O. N/D') + '</span>' +
+                        '<br><span class="text-[10px] text-gray-500">Eseguito da: ' + (intv.creator_name || 'N/D') + '</span>' +
                     '</div>' +
                     '<div class="space-x-2 flex">' +
                         (intv.can_edit ? '<button onclick=\'openInterventoModal(' + iData + ')\' class="text-yellow-600 p-1" title="Modifica"><i class="ph ph-pencil-line text-lg"></i></button>' : '') +

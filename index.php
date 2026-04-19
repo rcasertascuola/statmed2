@@ -183,6 +183,37 @@ if (isset($_GET['change_team'])) {
                 </div>
             </div>
 
+            <div class="mb-8 bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="ph ph-users-four text-blue-600"></i> Le Tue Equipe
+                    </h3>
+                    <?php if ($current_team_id): ?>
+                    <a href="?change_team=1" class="text-xs text-blue-500 hover:underline">Cambia selezione</a>
+                    <?php endif; ?>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <?php foreach ($teams as $t): ?>
+                        <div class="p-4 rounded-lg border <?php echo $t['id'] == $current_team_id ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'; ?> flex justify-between items-center">
+                            <div>
+                                <div class="font-bold text-gray-800"><?php echo htmlspecialchars($t['name']); ?></div>
+                                <div class="text-[10px] uppercase font-bold text-gray-400">
+                                    <?php echo $t['leader_id'] == $user_id ? 'Capo Equipe' : 'Membro'; ?>
+                                </div>
+                            </div>
+                            <?php if ($t['id'] == $current_team_id): ?>
+                                <span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">ATTIVA</span>
+                            <?php else: ?>
+                                <form method="POST">
+                                    <input type="hidden" name="team_id" value="<?php echo $t['id']; ?>">
+                                    <button type="submit" class="text-blue-500 text-xs font-bold hover:underline">Seleziona</button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
             <div class="flex flex-wrap gap-4 mb-8">
                 <a href="pazienti.php" class="flex-1 min-w-[200px] bg-blue-600 text-white p-6 rounded-xl shadow-lg hover:bg-blue-700 transition flex items-center justify-between">
                     <div>
@@ -216,16 +247,6 @@ if (isset($_GET['change_team'])) {
                 <?php endif; ?>
             </div>
 
-            <?php if ($current_team_id):
-                $stmt = $db->prepare("SELECT name FROM teams WHERE id = ?");
-                $stmt->execute([$current_team_id]);
-                $t_name = $stmt->fetchColumn();
-            ?>
-            <div class="text-right text-xs text-gray-500">
-                Equipe attiva: <strong><?php echo htmlspecialchars($t_name); ?></strong>
-                | <a href="?change_team=1" class="text-blue-500 hover:underline">Cambia</a>
-            </div>
-            <?php endif; ?>
 
         <?php endif; ?>
     </main>

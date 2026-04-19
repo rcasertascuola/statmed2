@@ -222,7 +222,7 @@ foreach ($data as &$row) {
             const row = rawData.find(r => r.paziente_id === id);
             const opt = document.createElement('option');
             opt.value = id;
-            opt.text = `ID ${id} - ${decrypt(row.nome_cognome)}`;
+            opt.text = decrypt(row.nome_cognome);
             pSelect.appendChild(opt);
         });
 
@@ -235,7 +235,7 @@ foreach ($data as &$row) {
                 const row = rawData.find(r => r.intervento_id === id);
                 const opt = document.createElement('option');
                 opt.value = id;
-                opt.text = `${row.tipo_intervento} (ID ${id})`;
+                opt.text = row.tipo_intervento;
                 iSelect.appendChild(opt);
             });
         }

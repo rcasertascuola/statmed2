@@ -23,6 +23,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $stmt->execute([$_POST['hospital_id'], $_POST['name']]);
                 $message = "Unità Operativa aggiunta.";
                 break;
+            case 'update_hospital':
+                if (!isAdmin()) throw new Exception("Solo l'admin può rinominare ospedali.");
+                $stmt = $db->prepare("UPDATE hospitals SET name = ? WHERE id = ?");
+                $stmt->execute([$_POST['name'], $_POST['hospital_id']]);
+                $message = "Ospedale rinominato.";
+                break;
+            case 'update_ou':
+                if (!isAdmin()) throw new Exception("Solo l'admin può rinominare unità operative.");
+                $stmt = $db->prepare("UPDATE operative_units SET name = ? WHERE id = ?");
+                $stmt->execute([$_POST['name'], $_POST['ou_id']]);
+                $message = "Unità Operativa rinominata.";
+                break;
             case 'add_team':
                 $stmt = $db->prepare("INSERT INTO teams (name, leader_id) VALUES (?, ?)");
                 $stmt->execute([$_POST['name'], $_POST['leader_id']]);
@@ -51,6 +63,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $stmt = $db->prepare("INSERT IGNORE INTO user_teams (user_id, team_id, can_edit_all) VALUES (?, ?, ?)");
                 $stmt->execute([$_POST['user_id'], $_POST['team_id'], isset($_POST['can_edit_all']) ? 1 : 0]);
                 $message = "Utente assegnato all'equipe.";
+                break;
+            case 'remove_user_team':
+                if (isLeader()) {
+                    $check = $db->prepare("SELECT id FROM teams WHERE id = ? AND leader_id = ?");
+                    $check->execute([$_POST['team_id'], $_SESSION['user_id']]);
+                    if (!$check->fetch()) throw new Exception("Non puoi gestire questa equipe.");
+                }
+                $stmt = $db->prepare("DELETE FROM user_teams WHERE user_id = ? AND team_id = ?");
+                $stmt->execute([$_POST['user_id'], $_POST['team_id']]);
+                $message = "Utente rimosso dall'equipe.";
                 break;
             case 'add_user':
                 if (!isAdmin()) throw new Exception("Solo l'admin può creare utenti.");
@@ -235,14 +257,40 @@ if (isAdmin()) {
                         </div>
                     </form>
                     <?php endif; ?>
-                    <ul class="text-sm space-y-1 mt-4 border-t pt-4 max-h-40 overflow-y-auto">
-                        <?php foreach ($ous as $ou): ?>
-                            <li class="flex justify-between">
-                                <span><?php echo htmlspecialchars($ou['name']); ?></span>
-                                <span class="text-gray-400"><?php echo htmlspecialchars($ou['hospital_name']); ?></span>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
+                    <div class="mt-4 border-t pt-4">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Modifica Ospedali</h3>
+                        <div class="space-y-2 max-h-40 overflow-y-auto">
+                            <?php foreach ($hospitals as $h): ?>
+                                <form method="POST" class="flex gap-2 items-center">
+                                    <input type="hidden" name="action" value="update_hospital">
+                                    <input type="hidden" name="hospital_id" value="<?php echo $h['id']; ?>">
+                                    <input type="text" name="name" value="<?php echo htmlspecialchars($h['name']); ?>" class="flex-1 p-1 text-xs border rounded" required>
+                                    <button type="submit" class="text-blue-500 hover:text-blue-700" title="Rinomina">
+                                        <i class="ph ph-check-circle text-lg"></i>
+                                    </button>
+                                </form>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 border-t pt-4">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Modifica Unità Operative</h3>
+                        <div class="space-y-2 max-h-60 overflow-y-auto">
+                            <?php foreach ($ous as $ou): ?>
+                                <form method="POST" class="flex flex-col gap-1 p-2 border rounded bg-gray-50">
+                                    <input type="hidden" name="action" value="update_ou">
+                                    <input type="hidden" name="ou_id" value="<?php echo $ou['id']; ?>">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase"><?php echo htmlspecialchars($ou['hospital_name']); ?></span>
+                                        <button type="submit" class="text-blue-500 hover:text-blue-700" title="Rinomina">
+                                            <i class="ph ph-check-circle text-lg"></i>
+                                        </button>
+                                    </div>
+                                    <input type="text" name="name" value="<?php echo htmlspecialchars($ou['name']); ?>" class="w-full p-1 text-xs border rounded" required>
+                                </form>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </section>
 
                 <section class="bg-white p-6 rounded-lg shadow">
@@ -273,28 +321,70 @@ if (isAdmin()) {
                             $stmt = $db->prepare("SELECT operative_unit_id FROM team_operative_units WHERE team_id = ?");
                             $stmt->execute([$t['id']]);
                             $active_ous = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                            // Fetch members of this team
+                            $stmt = $db->prepare("
+                                SELECT u.name, u.username, ut.can_edit_all, u.id as user_id
+                                FROM users u
+                                JOIN user_teams ut ON u.id = ut.user_id
+                                WHERE ut.team_id = ?
+                                UNION
+                                SELECT name, username, 1 as can_edit_all, id as user_id
+                                FROM users
+                                WHERE id = ?
+                            ");
+                            $stmt->execute([$t['id'], $t['leader_id']]);
+                            $members = $stmt->fetchAll();
                         ?>
-                        <form method="POST" class="space-y-4 p-4 border rounded bg-gray-50 mb-4">
-                            <input type="hidden" name="action" value="update_team">
-                            <input type="hidden" name="team_id" value="<?php echo $t['id']; ?>">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Equipe</label>
-                                <input type="text" name="name" value="<?php echo htmlspecialchars($t['name']); ?>" class="w-full p-2 border rounded" required>
+                        <div class="p-4 border rounded bg-gray-50 mb-4">
+                            <form method="POST" class="space-y-4 mb-4">
+                                <input type="hidden" name="action" value="update_team">
+                                <input type="hidden" name="team_id" value="<?php echo $t['id']; ?>">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Equipe</label>
+                                    <input type="text" name="name" value="<?php echo htmlspecialchars($t['name']); ?>" class="w-full p-2 border rounded" required>
+                                </div>
+                                <div class="text-sm font-bold text-gray-600">Unità Operative associate:</div>
+                                <div class="grid grid-cols-2 gap-2 text-xs max-h-32 overflow-y-auto border p-2 rounded bg-white">
+                                    <?php
+                                    // Fetch all OUs to let leader choose from
+                                    $all_ous = $db->query("SELECT ou.*, h.name as hospital_name FROM operative_units ou JOIN hospitals h ON ou.hospital_id = h.id")->fetchAll();
+                                    foreach ($all_ous as $ou): ?>
+                                        <label class="flex items-center gap-1">
+                                            <input type="checkbox" name="ou_ids[]" value="<?php echo $ou['id']; ?>" <?php echo in_array($ou['id'], $active_ous) ? 'checked' : ''; ?>>
+                                            <?php echo htmlspecialchars($ou['name']); ?> (<?php echo htmlspecialchars($ou['hospital_name']); ?>)
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded text-sm">Salva Modifiche</button>
+                            </form>
+
+                            <div class="mt-4 border-t pt-4">
+                                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Membri dell'Equipe</h4>
+                                <ul class="text-xs space-y-1">
+                                    <?php foreach ($members as $m): ?>
+                                        <li class="flex justify-between items-center bg-white p-1 rounded px-2 border border-gray-100">
+                                            <span><?php echo htmlspecialchars($m['name'] ?? $m['username']); ?></span>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] text-gray-400 font-bold uppercase">
+                                                    <?php echo $m['user_id'] == $t['leader_id'] ? 'Capo' : ($m['can_edit_all'] ? 'Editor' : 'User'); ?>
+                                                </span>
+                                                <?php if ($m['user_id'] != $t['leader_id']): ?>
+                                                    <form method="POST" onsubmit="return confirm('Rimuovere questo membro?')" class="inline">
+                                                        <input type="hidden" name="action" value="remove_user_team">
+                                                        <input type="hidden" name="team_id" value="<?php echo $t['id']; ?>">
+                                                        <input type="hidden" name="user_id" value="<?php echo $m['user_id']; ?>">
+                                                        <button type="submit" class="text-red-500 hover:text-red-700" title="Rimuovi">
+                                                            <i class="ph ph-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
                             </div>
-                            <div class="text-sm font-bold text-gray-600">Unità Operative associate:</div>
-                            <div class="grid grid-cols-2 gap-2 text-xs max-h-32 overflow-y-auto border p-2 rounded bg-white">
-                                <?php
-                                // Fetch all OUs to let leader choose from
-                                $all_ous = $db->query("SELECT ou.*, h.name as hospital_name FROM operative_units ou JOIN hospitals h ON ou.hospital_id = h.id")->fetchAll();
-                                foreach ($all_ous as $ou): ?>
-                                    <label class="flex items-center gap-1">
-                                        <input type="checkbox" name="ou_ids[]" value="<?php echo $ou['id']; ?>" <?php echo in_array($ou['id'], $active_ous) ? 'checked' : ''; ?>>
-                                        <?php echo htmlspecialchars($ou['name']); ?> (<?php echo htmlspecialchars($ou['hospital_name']); ?>)
-                                    </label>
-                                <?php endforeach; ?>
-                            </div>
-                            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded text-sm">Salva Modifiche</button>
-                        </form>
+                        </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </section>
