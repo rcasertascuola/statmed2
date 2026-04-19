@@ -98,6 +98,9 @@ switch ($action) {
     case 'rename_tag':
         handleRenameTag($db, $method);
         break;
+    case 'app_settings':
+        handleAppSettings($db, $method);
+        break;
     default:
         echo json_encode(['error' => 'Invalid action']);
         break;
@@ -425,6 +428,31 @@ function handleRenameTag($db, $method) {
     } catch (Exception $e) {
         $db->rollBack();
         echo json_encode(['error' => $e->getMessage()]);
+    }
+}
+
+function handleAppSettings($db, $method) {
+    if ($method === 'GET') {
+        $key = $_GET['key'] ?? null;
+        if ($key) {
+            $stmt = $db->prepare("SELECT setting_value FROM app_settings WHERE setting_key = ?");
+            $stmt->execute([$key]);
+            echo json_encode(['value' => $stmt->fetchColumn()]);
+        } else {
+            $stmt = $db->query("SELECT * FROM app_settings");
+            echo json_encode($stmt->fetchAll());
+        }
+    } elseif ($method === 'POST') {
+        if (!isAdmin() && !isLeader()) { echo json_encode(['error' => 'Forbidden']); exit; }
+        $data = json_decode(file_get_contents('php://input'), true);
+        $stmt = $db->prepare("INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+        // Handle SQLite compatibility if needed, but the primary is MySQL
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $stmt = $db->prepare("INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value");
+        }
+        $stmt->execute([$data['key'], $data['value']]);
+        echo json_encode(['success' => true]);
     }
 }
 

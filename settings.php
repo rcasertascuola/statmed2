@@ -258,6 +258,7 @@ if (isAdmin()) {
                     <?php echo isAdmin() ? 'Equipe e Ospedali' : 'La Mia Equipe'; ?>
                 </button>
                 <button onclick="openTab('users-tab')" id="btn-users-tab" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 whitespace-nowrap">Membri Equipe</button>
+                <button onclick="openTab('clinical-tab')" id="btn-clinical-tab" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 whitespace-nowrap">Configurazione Clinica</button>
                 <?php if (isAdmin()): ?>
                     <button onclick="openTab('new-user-tab')" id="btn-new-user-tab" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 whitespace-nowrap">Nuovo Utente</button>
                 <?php endif; ?>
@@ -574,14 +575,156 @@ if (isAdmin()) {
             </div>
         </div>
 
+        <!-- CLINICAL CONFIG TAB -->
+        <div id="clinical-tab" class="tab-content space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Phase Order Management -->
+                <section class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="ph ph-list-numbers"></i> Ordine Fasi Cliniche</h2>
+                    <p class="text-xs text-gray-500 mb-4">Trascina le fasi per cambiare l'ordine di visualizzazione nei grafici. Le fasi disattivate non verranno mostrate.</p>
+
+                    <div id="phase-list" class="space-y-2 mb-6">
+                        <!-- Loaded via JS -->
+                    </div>
+
+                    <button onclick="savePhaseOrder()" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 transition">Salva Ordine Fasi</button>
+
+                    <div class="mt-6 pt-6 border-t">
+                        <h3 class="text-sm font-bold text-gray-600 mb-2 uppercase">Aggiungi Nuova Fase</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-phase-name" placeholder="Es: POST_24H" class="flex-1 p-2 border rounded text-sm uppercase">
+                            <button onclick="addPhase()" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 shadow transition">+</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Links to clinical_config.php parts -->
+                <section class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="ph ph-stethoscope"></i> Altre Configurazioni</h2>
+                    <div class="grid grid-cols-1 gap-4">
+                        <a href="clinical_config.php" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition group">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-blue-100 p-2 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
+                                    <i class="ph ph-thermometer text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800">Range Clinici</h3>
+                                    <p class="text-xs text-gray-500">Configura i limiti normali e critici per i parametri.</p>
+                                </div>
+                            </div>
+                            <i class="ph ph-caret-right text-gray-400"></i>
+                        </a>
+
+                        <a href="clinical_config.php#tags" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition group" onclick="localStorage.setItem('active_clinical_tab', 'tags-tab')">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-purple-100 p-2 rounded-lg text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition">
+                                    <i class="ph ph-tags text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800">Libreria Tag</h3>
+                                    <p class="text-xs text-gray-500">Gestisci i tag per interventi, comorbidità, ecc.</p>
+                                </div>
+                            </div>
+                            <i class="ph ph-caret-right text-gray-400"></i>
+                        </a>
+                    </div>
+                </section>
+            </div>
+        </div>
+
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             document.getElementById('btn-' + tabId).classList.add('active');
+
+            if (tabId === 'clinical-tab') loadPhaseOrder();
+        }
+
+        let phaseSortable;
+        async function loadPhaseOrder() {
+            const res = await fetch('api.php?action=app_settings&key=phase_order');
+            const data = await res.json();
+            let phases = [];
+            try {
+                phases = JSON.parse(data.value || '["PRE_SBT","SBT","ESTUBAZIONE","T0","T30","POST_2H","POST_6H","POST_12H"]');
+            } catch(e) {
+                phases = ["PRE_SBT","SBT","ESTUBAZIONE","T0","T30","POST_2H","POST_6H","POST_12H"];
+            }
+
+            // We also want to support hidden phases or a complete list
+            // For now let's just use what's in the setting
+
+            const container = document.getElementById('phase-list');
+            container.innerHTML = '';
+
+            phases.forEach(phase => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-3 p-3 bg-gray-50 border rounded-lg cursor-move hover:bg-gray-100 transition';
+                item.dataset.phase = phase;
+                item.innerHTML = `
+                    <i class="ph ph-dots-six-vertical text-gray-400"></i>
+                    <span class="flex-1 font-bold text-sm">${phase}</span>
+                    <button onclick="removePhase(this)" class="text-red-500 hover:text-red-700 p-1">
+                        <i class="ph ph-trash"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+
+            if (phaseSortable) phaseSortable.destroy();
+            phaseSortable = new Sortable(container, {
+                animation: 150,
+                ghostClass: 'bg-blue-50'
+            });
+        }
+
+        async function savePhaseOrder() {
+            const phases = Array.from(document.querySelectorAll('#phase-list > div')).map(el => el.dataset.phase);
+            const res = await fetch('api.php?action=app_settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'phase_order', value: JSON.stringify(phases) })
+            });
+            if (res.ok) alert('Ordine fasi salvato!');
+            else alert('Errore nel salvataggio.');
+        }
+
+        function addPhase() {
+            const nameInput = document.getElementById('new-phase-name');
+            const name = nameInput.value.trim().toUpperCase();
+            if (!name) return;
+
+            // Check if already exists
+            const existing = Array.from(document.querySelectorAll('#phase-list > div')).map(el => el.dataset.phase);
+            if (existing.includes(name)) {
+                alert('Questa fase esiste già.');
+                return;
+            }
+
+            const container = document.getElementById('phase-list');
+            const item = document.createElement('div');
+            item.className = 'flex items-center gap-3 p-3 bg-gray-50 border rounded-lg cursor-move hover:bg-gray-100 transition';
+            item.dataset.phase = name;
+            item.innerHTML = `
+                <i class="ph ph-dots-six-vertical text-gray-400"></i>
+                <span class="flex-1 font-bold text-sm">${name}</span>
+                <button onclick="removePhase(this)" class="text-red-500 hover:text-red-700 p-1">
+                    <i class="ph ph-trash"></i>
+                </button>
+            `;
+            container.appendChild(item);
+            nameInput.value = '';
+        }
+
+        function removePhase(btn) {
+            if (confirm('Rimuovere questa fase?')) {
+                btn.closest('div').remove();
+            }
         }
     </script>
 </body>
