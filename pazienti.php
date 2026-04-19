@@ -54,6 +54,8 @@ if ($current_team_id) {
         .range-ok { background-color: #dcfce7; border-color: #22c55e; }
         .range-warning { background-color: #fef9c3; border-color: #eab308; }
         .range-critical { background-color: #fee2e2; border-color: #ef4444; }
+        .chevron-icon { transition: transform 0.2s; }
+        .rotate-90 { transform: rotate(90deg); }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -183,10 +185,17 @@ if ($current_team_id) {
     <!-- Interventi/Rilevazioni Modal -->
     <div id="detailsModal" class="modal">
         <div class="modal-content max-w-4xl">
-            <h3 class="text-xl font-bold mb-1">Dettagli Clinici: <span id="detailPazienteNome"></span></h3>
-            <div id="detailPazienteInfo" class="text-xs text-gray-500 mb-4"></div>
+            <div class="flex justify-between items-start mb-1">
+                <div>
+                    <h3 class="text-xl font-bold">Dettagli Clinici: <span id="detailPazienteNome"></span></h3>
+                    <div id="detailPazienteInfo" class="text-xs text-gray-500"></div>
+                </div>
+                <button type="button" onclick="closeModal('detailsModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="ph ph-x text-2xl"></i>
+                </button>
+            </div>
 
-            <div class="mb-6">
+            <div class="mb-6 mt-4">
                 <h4 class="font-bold border-b mb-2 flex justify-between">
                     Interventi
                     <button onclick="openInterventoModal()" class="text-blue-500 text-sm">+ Aggiungi</button>
@@ -194,8 +203,10 @@ if ($current_team_id) {
                 <div id="interventi-list" class="space-y-4"></div>
             </div>
 
-            <div class="flex justify-end">
-                <button type="button" onclick="closeModal('detailsModal')" class="bg-gray-300 px-4 py-2 rounded">Chiudi</button>
+            <div class="flex justify-end pt-4 border-t">
+                <button type="button" onclick="closeModal('detailsModal')" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-full text-gray-600 transition" title="Chiudi">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -642,20 +653,23 @@ if ($current_team_id) {
                 const div = document.createElement('div');
                 div.className = 'p-4 bg-gray-50 rounded border';
                 const iData = JSON.stringify(intv).replace(/'/g, "&apos;");
-                div.innerHTML = '<div class="flex justify-between items-start mb-2">' +
-                    '<div>' +
-                        '<strong>' + intv.tipo_intervento + '</strong> - ASA: ' + intv.asa_score + ' - ' + (intv.urgenza == 1 ? 'URGENTE' : 'Elezione') +
-                        '<br><span class="text-[10px] text-blue-600 uppercase font-bold">' + (intv.team_name || 'Equipe N/D') + ' | ' + (intv.uo_name || 'U.O. N/D') + '</span>' +
-                        '<br><span class="text-[10px] text-gray-500">Eseguito da: ' + (intv.creator_name || 'N/D') + '</span>' +
+                div.innerHTML = '<div class="flex justify-between items-start mb-2 cursor-pointer" onclick="toggleIntervento(' + intv.id + ')">' +
+                    '<div class="flex items-start gap-2">' +
+                        '<i id="intervento-chevron-' + intv.id + '" class="ph ph-caret-right text-lg mt-1 chevron-icon"></i>' +
+                        '<div>' +
+                            '<strong>' + intv.tipo_intervento + '</strong> - ASA: ' + intv.asa_score + ' - ' + (intv.urgenza == 1 ? 'URGENTE' : 'Elezione') +
+                            '<br><span class="text-[10px] text-blue-600 uppercase font-bold">' + (intv.team_name || 'Equipe N/D') + ' | ' + (intv.uo_name || 'U.O. N/D') + '</span>' +
+                            '<br><span class="text-[10px] text-gray-500">Eseguito da: ' + (intv.creator_name || 'N/D') + '</span>' +
+                        '</div>' +
                     '</div>' +
-                    '<div class="space-x-2 flex">' +
+                    '<div class="space-x-2 flex" onclick="event.stopPropagation()">' +
                         (intv.can_edit ? '<button onclick=\'openInterventoModal(' + iData + ')\' class="text-yellow-600 p-1" title="Modifica"><i class="ph ph-pencil-line text-lg"></i></button>' : '') +
                         (intv.can_delete ? '<button onclick="deleteIntervento(' + intv.id + ')" class="text-red-500 p-1" title="Elimina"><i class="ph ph-trash text-lg"></i></button>' : '') +
                     '</div>' +
                 '</div>' +
                 '<div class="text-sm text-gray-600 mb-2">Euroscore: ' + intv.euroscore_ii + ' | CEC: ' + intv.durata_cec_ore + 'h | IOT: ' + intv.timing_iot_h + 'h</div>' +
                 (intv.comorbilita ? '<div class="text-xs text-gray-500 mb-2"><strong>Comorbidità:</strong> ' + intv.comorbilita + '</div>' : '') +
-                '<div class="ml-4">' +
+                '<div id="intervento-content-' + intv.id + '" class="ml-4 hidden">' +
                     '<h5 class="font-semibold text-xs border-b mb-1 flex justify-between">' +
                         'Rilevazioni Cliniche' +
                         '<button onclick="openRilevazioneModal(' + intv.id + ')" class="text-blue-500">+ Aggiungi</button>' +
@@ -670,6 +684,11 @@ if ($current_team_id) {
                 list.appendChild(div);
                 loadRilevazioni(intv.id);
                 loadEsito(intv.id);
+
+                // Expand the last intervention
+                if (i === interventi.length - 1) {
+                    toggleIntervento(intv.id);
+                }
             }
         }
 
@@ -733,9 +752,26 @@ if ($current_team_id) {
 
         function toggleRilevazione(id) {
             const content = document.getElementById('rilevazione-content-' + id);
+            const icon = document.getElementById('rilevazione-chevron-' + id);
             const isHidden = content.classList.contains('hidden');
             document.querySelectorAll('[id^="rilevazione-content-"]').forEach(function(el) { el.classList.add('hidden'); });
-            if (isHidden) content.classList.remove('hidden');
+            document.querySelectorAll('[id^="rilevazione-chevron-"]').forEach(function(el) { el.classList.remove('rotate-90'); });
+            if (isHidden) {
+                content.classList.remove('hidden');
+                if (icon) icon.classList.add('rotate-90');
+            }
+        }
+
+        function toggleIntervento(id) {
+            const content = document.getElementById('intervento-content-' + id);
+            const icon = document.getElementById('intervento-chevron-' + id);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                if (icon) icon.classList.add('rotate-90');
+            } else {
+                content.classList.add('hidden');
+                if (icon) icon.classList.remove('rotate-90');
+            }
         }
 
         async function loadRilevazioni(intervento_id) {
@@ -754,9 +790,12 @@ if ($current_team_id) {
                 if(r.niv) extra += ' NIV: ' + r.niv;
                 const rData = JSON.stringify(r).replace(/'/g, "&apos;");
                 item.innerHTML = '<div class="flex justify-between items-center bg-white p-2 cursor-pointer hover:bg-gray-50" onclick="toggleRilevazione(' + r.id + ')">' +
-                    '<span class="text-xs truncate pr-2 flex-1">' +
-                        '<strong>' + r.fase + ':</strong> FR ' + r.fr + ', TV ' + r.tv + ', Tobin: <span class="' + tobinWarning + '">' + r.tobin_index + '</span>, ROX: <span class="' + roxWarning + '">' + r.rox_index + '</span>, SpO2 ' + r.spo2 + '%, NRS ' + r.nrs_dolore + extra +
-                    '</span>' +
+                    '<div class="flex items-center gap-2 flex-1 min-w-0">' +
+                        '<i id="rilevazione-chevron-' + r.id + '" class="ph ph-caret-right text-xs chevron-icon"></i>' +
+                        '<span class="text-xs truncate pr-2">' +
+                            '<strong>' + r.fase + ':</strong> FR ' + r.fr + ', TV ' + r.tv + ', Tobin: <span class="' + tobinWarning + '">' + r.tobin_index + '</span>, ROX: <span class="' + roxWarning + '">' + r.rox_index + '</span>, SpO2 ' + r.spo2 + '%, NRS ' + r.nrs_dolore + extra +
+                        '</span>' +
+                    '</div>' +
                     '<div class="flex items-center space-x-2 ml-2" onclick="event.stopPropagation()">' +
                         (r.can_edit ? '<button onclick=\'openRilevazioneModal(' + intervento_id + ', ' + rData + ')\' class="text-yellow-600 p-1" title="Modifica"><i class="ph ph-pencil-line"></i></button>' : '') +
                         (r.can_delete ? '<button onclick="deleteRilevazione(' + r.id + ', ' + intervento_id + ')" class="text-red-500 p-1" title="Elimina"><i class="ph ph-trash"></i></button>' : '') +
