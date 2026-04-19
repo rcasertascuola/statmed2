@@ -40,14 +40,41 @@ if (isAdmin()) {
 }
 
 // Handle team selection and key entry
+$error_message = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['team_id'])) {
-        $_SESSION['active_team_id'] = $_POST['team_id'];
+        $selected_team_id = $_POST['team_id'];
+
         if (isset($_POST['team_key'])) {
-            $_SESSION['team_keys'][$_POST['team_id']] = $_POST['team_key'];
+            $provided_key = $_POST['team_key'];
+
+            // Verify key against hash if it exists
+            $stmt = $db->prepare("SELECT team_key_hash FROM teams WHERE id = ?");
+            $stmt->execute([$selected_team_id]);
+            $hash = $stmt->fetchColumn();
+
+            if ($hash) {
+                if (password_verify($provided_key, $hash)) {
+                    $_SESSION['team_keys'][$selected_team_id] = $provided_key;
+                    $_SESSION['active_team_id'] = $selected_team_id;
+                    header('Location: index.php');
+                    exit;
+                } else {
+                    $error_message = "Chiave dell'equipe non corretta.";
+                }
+            } else {
+                // If no hash exists, we allow it but it might fail decryption
+                // Ideally we should enforce a hash, but for backward compatibility:
+                $_SESSION['team_keys'][$selected_team_id] = $provided_key;
+                $_SESSION['active_team_id'] = $selected_team_id;
+                header('Location: index.php');
+                exit;
+            }
+        } else {
+            $_SESSION['active_team_id'] = $selected_team_id;
+            header('Location: index.php');
+            exit;
         }
-        header('Location: index.php');
-        exit;
     }
 }
 
@@ -205,10 +232,13 @@ if (isset($_GET['change_team'])) {
         <?php elseif (!$team_key): ?>
             <div class="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
                 <h2 class="text-xl font-bold mb-4">Inserisci Chiave Equipe</h2>
+                <?php if ($error_message): ?>
+                    <p class="text-red-500 mb-4 text-sm font-bold"><?php echo $error_message; ?></p>
+                <?php endif; ?>
                 <p class="text-sm text-gray-600 mb-4">L'equipe selezionata richiede una chiave di cifratura per accedere ai dati sensibili.</p>
                 <form method="POST">
                     <input type="hidden" name="team_id" value="<?php echo $current_team_id; ?>">
-                    <input type="password" name="team_key" class="w-full p-2 border rounded mb-4" placeholder="Chiave segreta" required>
+                    <input type="password" name="team_key" class="w-full p-2 border rounded mb-4" placeholder="Chiave segreta" required autofocus>
                     <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Accedi ai Dati</button>
                 </form>
                 <div class="mt-4 text-center">

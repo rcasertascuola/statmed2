@@ -34,9 +34,36 @@ function login($username, $password) {
             }
         }
 
+        // Initialize team_keys array in session if not exists
+        if (!isset($_SESSION['team_keys'])) {
+            $_SESSION['team_keys'] = [];
+        }
+
         return true;
     }
     return false;
+}
+
+function decryptWithKey($encrypted_data, $key_str) {
+    $data = base64_decode($encrypted_data);
+    if (!$data) return false;
+
+    $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+    $iv = substr($data, 0, $iv_length);
+    $ciphertext = substr($data, $iv_length);
+
+    $key = hash('sha256', $key_str, true);
+    return openssl_decrypt($ciphertext, 'aes-256-cbc', $key, 0, $iv);
+}
+
+function encryptWithKey($data, $key_str) {
+    $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+    $iv = openssl_random_pseudo_bytes($iv_length);
+
+    $key = hash('sha256', $key_str, true);
+    $ciphertext = openssl_encrypt($data, 'aes-256-cbc', $key, 0, $iv);
+
+    return base64_encode($iv . $ciphertext);
 }
 
 function decryptWithPassword($encrypted_data, $password) {

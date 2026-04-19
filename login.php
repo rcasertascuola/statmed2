@@ -14,7 +14,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Handle logout
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     logout();
-    header('Location: index.php');
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <body>
+        <script>
+            sessionStorage.clear();
+            window.location.href = 'index.php';
+        </script>
+    </body>
+    </html>
+    <?php
     exit;
 }
 
@@ -36,7 +46,7 @@ if (!isLoggedIn()): ?>
         <?php if (isset($error)): ?>
             <p class="text-red-500 mb-4"><?php echo $error; ?></p>
         <?php endif; ?>
-        <form method="POST">
+        <form method="POST" onsubmit="sessionStorage.clear();">
             <input type="hidden" name="action" value="login">
             <div class="mb-4">
                 <label class="block text-gray-700">Username</label>

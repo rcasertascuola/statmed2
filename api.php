@@ -136,12 +136,12 @@ function handlePazienti($db, $method) {
         $data = json_decode(file_get_contents('php://input'), true);
         if (isset($data['id']) && !empty($data['id'])) {
             if (!canEditPatient($db, $data['id'])) { echo json_encode(['error' => 'Forbidden']); exit; }
-            $stmt = $db->prepare("UPDATE pazienti SET nome_cognome=?, sesso=?, eta=?, altezza=?, peso=?, bmi=? WHERE id=?");
-            $stmt->execute([$data['nome_cognome'], $data['sesso'], $data['eta'], $data['altezza'], $data['peso'], $data['bmi'], $data['id']]);
+            $stmt = $db->prepare("UPDATE pazienti SET nome_cognome=?, codice_fiscale=?, sesso=?, eta=?, altezza=?, peso=?, bmi=? WHERE id=?");
+            $stmt->execute([$data['nome_cognome'], $data['codice_fiscale'] ?? null, $data['sesso'], $data['eta'], $data['altezza'], $data['peso'], $data['bmi'], $data['id']]);
             logActivity($db, 'UPDATE_PAZIENTE', "ID: " . $data['id']);
         } else {
-            $stmt = $db->prepare("INSERT INTO pazienti (nome_cognome, sesso, eta, altezza, peso, bmi, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$data['nome_cognome'], $data['sesso'], $data['eta'], $data['altezza'], $data['peso'], $data['bmi'], $user_id]);
+            $stmt = $db->prepare("INSERT INTO pazienti (nome_cognome, codice_fiscale, sesso, eta, altezza, peso, bmi, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['nome_cognome'], $data['codice_fiscale'] ?? null, $data['sesso'], $data['eta'], $data['altezza'], $data['peso'], $data['bmi'], $user_id]);
             $new_id = $db->lastInsertId();
             // Link to current team
             if ($current_team_id) {
