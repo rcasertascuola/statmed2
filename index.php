@@ -22,6 +22,12 @@ if (isAdmin()) {
 
     if ($current_team_id) {
         $_SESSION['active_team_id'] = $current_team_id;
+
+        // Fetch OU name for display
+        $stmt_ou = $db->prepare("SELECT ou.name FROM operative_units ou JOIN team_operative_units tou ON ou.id = tou.operative_unit_id WHERE tou.team_id = ? LIMIT 1");
+        $stmt_ou->execute([$current_team_id]);
+        $current_ou_name = $stmt_ou->fetchColumn();
+
         // Check if we have the key for this team
         if (isset($_SESSION['managed_teams'][$current_team_id])) {
             $team_key = $_SESSION['managed_teams'][$current_team_id];
@@ -68,59 +74,116 @@ if (isset($_GET['change_team'])) {
     </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-blue-600 text-white p-4 shadow-lg">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
-            <div class="flex items-center justify-between w-full md:w-auto">
-                <div class="flex items-center gap-2">
-                    <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
+    <nav class="bg-blue-600 text-white p-3 shadow-lg relative z-50">
+        <div class="container mx-auto">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <a href="index.php" class="hover:opacity-80 transition" title="Dashboard">
+                        <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
+                    </a>
                 </div>
-                <div class="flex items-center gap-2 md:hidden">
-                    <a href="profile.php" class="bg-blue-700 hover:bg-blue-800 p-2 rounded-full text-white transition" title="Profilo">
-                        <i class="ph ph-user text-xl"></i>
-                    </a>
-                    <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
-                        <i class="ph ph-sign-out text-xl"></i>
-                    </a>
+
+                <div class="flex items-center gap-2 font-bold uppercase tracking-wider text-sm md:text-base">
+                    <i class="ph ph-gauge"></i>
+                    <span>Dashboard</span>
+                </div>
+
+                <div class="flex items-center">
+                    <div class="hidden md:flex items-center gap-2">
+                        <a href="index.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Dashboard">
+                            <i class="ph ph-gauge text-xl"></i>
+                        </a>
+                        <a href="pazienti.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Pazienti">
+                            <i class="ph ph-users text-xl"></i>
+                        </a>
+                        <a href="stats.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Statistiche">
+                            <i class="ph ph-chart-line-up text-xl"></i>
+                        </a>
+                        <?php if (isAdmin() || isLeader()): ?>
+                        <a href="settings.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Impostazioni">
+                            <i class="ph ph-gear text-xl"></i>
+                        </a>
+                        <?php endif; ?>
+                        <a href="profile.php" class="p-2 hover:bg-blue-700 rounded-full transition" title="Profilo">
+                            <i class="ph ph-user text-xl"></i>
+                        </a>
+                        <a href="login.php?action=logout" class="p-2 hover:bg-red-600 rounded-full transition" title="Esci">
+                            <i class="ph ph-sign-out text-xl"></i>
+                        </a>
+                    </div>
+                    <button onclick="toggleMobileMenu()" class="md:hidden p-2 hover:bg-blue-700 rounded-full transition">
+                        <i class="ph ph-list text-2xl"></i>
+                    </button>
                 </div>
             </div>
-            <div class="flex items-center justify-center md:justify-between w-full md:w-auto gap-4">
-                <span class="text-sm">
-                    Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?>
-                    <strong class="hidden md:inline"><?php echo htmlspecialchars($_SESSION['name']); ?></strong>
-                    <strong class="md:hidden"><?php echo htmlspecialchars(explode(' ', trim($_SESSION['name']))[0]); ?></strong>
+
+            <div class="mt-2 pt-2 border-t border-blue-500 flex flex-wrap items-center gap-2 text-sm">
+                <span>Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?>,</span>
+                <strong class="font-bold hidden md:inline"><?php echo htmlspecialchars($_SESSION['name']); ?></strong>
+                <strong class="font-bold md:hidden"><?php echo htmlspecialchars(explode(' ', trim($_SESSION['name']))[0]); ?></strong>
+                <span class="text-blue-100 italic">
+                    (<?php
+                        if (isAdmin()) {
+                            echo "Amministratore";
+                        } else {
+                            echo isLeader() ? "Capo Equipe" : "Staff";
+                            if (isset($current_ou_name) && $current_ou_name) {
+                                echo " - " . htmlspecialchars($current_ou_name);
+                            }
+                        }
+                    ?>)
                 </span>
-                <div class="hidden md:flex items-center space-x-2">
-                    <a href="profile.php" class="bg-blue-700 hover:bg-blue-800 p-2 rounded-full text-white transition" title="Profilo">
-                        <i class="ph ph-user text-xl"></i>
-                    </a>
-                    <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
-                        <i class="ph ph-sign-out text-xl"></i>
-                    </a>
-                </div>
+            </div>
+        </div>
+        <div id="mobileMenu" class="hidden absolute top-full left-0 w-full bg-blue-700 shadow-xl md:hidden">
+            <div class="flex flex-col p-2">
+                <a href="index.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
+                    <i class="ph ph-gauge text-xl"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="pazienti.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
+                    <i class="ph ph-users text-xl"></i>
+                    <span>Pazienti</span>
+                </a>
+                <a href="stats.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
+                    <i class="ph ph-chart-line-up text-xl"></i>
+                    <span>Statistiche</span>
+                </a>
+                <?php if (isAdmin() || isLeader()): ?>
+                <a href="settings.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
+                    <i class="ph ph-gear text-xl"></i>
+                    <span>Impostazioni</span>
+                </a>
+                <?php endif; ?>
+                <a href="profile.php" class="flex items-center gap-3 p-3 hover:bg-blue-800 rounded-lg transition">
+                    <i class="ph ph-user text-xl"></i>
+                    <span>Profilo</span>
+                </a>
+                <a href="login.php?action=logout" class="flex items-center gap-3 p-3 hover:bg-red-600 rounded-lg transition">
+                    <i class="ph ph-sign-out text-xl"></i>
+                    <span>Esci</span>
+                </a>
             </div>
         </div>
     </nav>
+    <script>
+    function toggleMobileMenu() {
+        const menu = document.getElementById('mobileMenu');
+        menu.classList.toggle('hidden');
+    }
+    </script>
 
     <main class="container mx-auto p-4 md:p-8">
-        <div class="flex justify-center mb-8">
-            <img src="assets/logo_large.png" alt="StatMed2 Logo" class="h-32 w-auto">
-        </div>
 
         <?php if (isAdmin()): ?>
-            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-                    <i class="ph ph-shield-check text-blue-600"></i> Pannello Amministrativo
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <a href="settings.php" class="bg-gray-800 text-white p-6 rounded-xl shadow-md hover:bg-gray-900 transition flex items-center gap-4">
-                        <i class="ph ph-gear-six text-3xl"></i>
-                        <div>
-                            <div class="font-bold text-lg">Configurazione</div>
-                            <div class="text-xs opacity-70">Utenti, Ospedali ed Equipe</div>
-                        </div>
-                    </a>
-                    <!-- Add more admin only links if needed -->
-                </div>
+            <div class="flex flex-wrap gap-4 mb-8">
+                <a href="settings.php" class="flex-1 min-w-[200px] bg-black text-white p-6 rounded-xl shadow-lg hover:bg-gray-900 transition flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xl font-bold">Configurazione</h4>
+                        <p class="text-sm opacity-80">Utenti, Ospedali ed Equipe</p>
+                    </div>
+                    <i class="ph ph-gear-six text-4xl"></i>
+                </a>
             </div>
         <?php elseif (empty($teams)): ?>
             <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
@@ -153,36 +216,6 @@ if (isset($_GET['change_team'])) {
                 </div>
             </div>
         <?php else: ?>
-            <!-- ACTUAL DASHBOARD -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
-                    <h3 class="text-gray-500 text-sm font-bold uppercase">Pazienti Totali</h3>
-                    <p class="text-3xl font-bold"><?php
-                        $q = "SELECT COUNT(*) FROM patient_teams WHERE team_id = ?";
-                        $stmt = $db->prepare($q);
-                        $stmt->execute([$current_team_id]);
-                        echo $stmt->fetchColumn();
-                    ?></p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
-                    <h3 class="text-gray-500 text-sm font-bold uppercase">I tuoi Pazienti</h3>
-                    <p class="text-3xl font-bold"><?php
-                        $stmt = $db->prepare("SELECT COUNT(*) FROM pazienti WHERE created_by = ?");
-                        $stmt->execute([$user_id]);
-                        echo $stmt->fetchColumn();
-                    ?></p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-purple-500">
-                    <h3 class="text-gray-500 text-sm font-bold uppercase">Interventi Recenti</h3>
-                    <p class="text-3xl font-bold"><?php
-                        $q = "SELECT COUNT(*) FROM interventi i JOIN patient_teams pt ON i.paziente_id = pt.paziente_id WHERE pt.team_id = ?";
-                        $stmt = $db->prepare($q);
-                        $stmt->execute([$current_team_id]);
-                        echo $stmt->fetchColumn();
-                    ?></p>
-                </div>
-            </div>
-
             <div class="mb-8 bg-white p-6 rounded-xl shadow-md border border-gray-100">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold flex items-center gap-2">
