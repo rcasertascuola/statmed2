@@ -99,7 +99,7 @@ $user = $stmt->fetch();
             <a href="index.php" class="hover:text-blue-200 transition">
                 <i class="ph ph-house text-2xl"></i>
             </a>
-            <h1 class="text-xl font-bold">Il Tuo Profilo</h1>
+            <div class="flex items-center gap-2"><img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto"><span class="text-xl font-bold">Il Tuo Profilo</span></div>
         </div>
         <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-sm">Esci</a>
     </nav>

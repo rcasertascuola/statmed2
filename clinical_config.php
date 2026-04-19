@@ -28,7 +28,7 @@ $db = getDB();
             <a href="index.php" class="hover:text-gray-300 transition">
                 <i class="ph ph-house text-2xl"></i>
             </a>
-            <h1 class="text-xl font-bold">Configurazione Clinica</h1>
+            <div class="flex items-center gap-2"><img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto"><span class="text-xl font-bold">Configurazione Clinica</span></div>
         </div>
         <div class="flex items-center gap-4">
             <span class="text-sm"><?php echo isAdmin() ? 'Admin' : 'Leader'; ?>: <strong><?php echo $_SESSION['name']; ?></strong></span>

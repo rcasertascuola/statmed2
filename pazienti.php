@@ -62,7 +62,7 @@ if ($current_team_id) {
             <a href="index.php" class="hover:text-blue-200 transition">
                 <i class="ph ph-house text-2xl"></i>
             </a>
-            <h1 class="text-xl font-bold">StatMed2 - Pazienti</h1>
+            <div class="flex items-center gap-2"><img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto"><span class="text-xl font-bold">StatMed2 - Pazienti</span></div>
         </div>
         <div class="flex flex-wrap items-center gap-2 md:gap-4">
             <span class="text-sm">Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?> <strong><?php echo $_SESSION['name']; ?></strong></span>

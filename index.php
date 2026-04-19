@@ -69,7 +69,10 @@ if (isset($_GET['change_team'])) {
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-blue-600 text-white p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-xl font-bold">StatMed2</h1>
+        <div class="flex items-center gap-2">
+            <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
+            <span class="text-xl font-bold">StatMed2</span>
+        </div>
         <div class="flex items-center gap-4">
             <span class="text-sm">Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?> <strong><?php echo $_SESSION['name']; ?></strong></span>
             <div class="flex items-center space-x-2">
@@ -84,6 +87,10 @@ if (isset($_GET['change_team'])) {
     </nav>
 
     <main class="container mx-auto p-4 md:p-8">
+        <div class="flex justify-center mb-8">
+            <img src="assets/logo_large.png" alt="StatMed2 Logo" class="h-32 w-auto">
+        </div>
+
         <?php if (isAdmin()): ?>
             <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
                 <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
