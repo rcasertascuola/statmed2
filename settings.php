@@ -85,11 +85,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $team_id = $_POST['team_id'];
                 $leader_pass = $_POST['leader_password'];
                 $new_key = $_POST['team_key'];
+                $old_key_provided = $_POST['old_team_key'] ?? '';
 
-                $encrypted_key = encryptWithPassword($new_key, $leader_pass);
-                $stmt = $db->prepare("UPDATE teams SET encrypted_team_key = ? WHERE id = ?");
-                $stmt->execute([$encrypted_key, $team_id]);
-                $message = "Chiave equipe impostata.";
+                // Verify leader password
+                $stmt = $db->prepare("SELECT password_hash FROM users WHERE id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+                if (!password_verify($leader_pass, $stmt->fetchColumn())) {
+                    throw new Exception("Password leader non corretta.");
+                }
+
+                // Check if we need to migrate data
+                $stmt = $db->prepare("SELECT encrypted_team_key, team_key_hash FROM teams WHERE id = ?");
+                $stmt->execute([$team_id]);
+                $team_data = $stmt->fetch();
+
+                $db->beginTransaction();
+                try {
+                    if ($team_data && $team_data['team_key_hash']) {
+                        // Migration needed. We need the old key.
+                        $old_key = $_SESSION['managed_teams'][$team_id] ?? $_SESSION['team_keys'][$team_id] ?? $old_key_provided;
+
+                        if (!$old_key || !password_verify($old_key, $team_data['team_key_hash'])) {
+                            throw new Exception("Per cambiare la chiave è necessario fornire la vecchia chiave corretta (o averla in sessione).");
+                        }
+
+                        // Decrypt and Re-encrypt patient names and CFs for this team
+                        // Note: patient names are unique per patient. If a patient belongs to multiple teams,
+                        // changing the key for ONE team will break it for others.
+                        // Based on user feedback: "if it's the same person, they'll have another ID".
+                        // So we only update patients linked to THIS team via patient_teams.
+                        $stmt_p = $db->prepare("
+                            SELECT p.id, p.nome_cognome, p.codice_fiscale
+                            FROM pazienti p
+                            JOIN patient_teams pt ON p.id = pt.paziente_id
+                            WHERE pt.team_id = ?
+                        ");
+                        $stmt_p->execute([$team_id]);
+                        $pazienti = $stmt_p->fetchAll();
+
+                        foreach ($pazienti as $p) {
+                            $dec_name = decryptWithKey($p['nome_cognome'], $old_key);
+                            $dec_cf = $p['codice_fiscale'] ? decryptWithKey($p['codice_fiscale'], $old_key) : null;
+
+                            if ($dec_name === false) continue; // Skip if failed
+
+                            $enc_name = encryptWithKey($dec_name, $new_key);
+                            $enc_cf = $dec_cf ? encryptWithKey($dec_cf, $new_key) : null;
+
+                            $upd = $db->prepare("UPDATE pazienti SET nome_cognome = ?, codice_fiscale = ? WHERE id = ?");
+                            $upd->execute([$enc_name, $enc_cf, $p['id']]);
+                        }
+                    }
+
+                    $encrypted_key = encryptWithPassword($new_key, $leader_pass);
+                    $key_hash = password_hash($new_key, PASSWORD_DEFAULT);
+
+                    $stmt = $db->prepare("UPDATE teams SET encrypted_team_key = ?, team_key_hash = ? WHERE id = ?");
+                    $stmt->execute([$encrypted_key, $key_hash, $team_id]);
+
+                    $db->commit();
+                    $_SESSION['managed_teams'][$team_id] = $new_key;
+                    $_SESSION['team_keys'][$team_id] = $new_key;
+                    $message = "Chiave equipe aggiornata e dati ricrittografati con successo.";
+                } catch (Exception $e) {
+                    $db->rollBack();
+                    throw $e;
+                }
                 break;
             case 'update_team':
                 if (isLeader()) {
@@ -433,26 +494,34 @@ if (isAdmin()) {
                 <div class="bg-yellow-50 p-4 rounded text-sm text-yellow-800 mb-6">
                     <strong>Controllo Chiave:</strong> Come Capo Equipe, sei l'unico a poter impostare la chiave di cifratura. La tua password attuale verrà usata per proteggere la chiave del team.
                 </div>
-                <form method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <form method="POST" class="space-y-4" onsubmit="return confirm('ATTENZIONE: Se cambi la chiave, tutti i nomi dei pazienti di questa equipe verranno ricrittografati. Assicurati che nessuno stia inserendo dati al momento. Procedere?')">
                     <input type="hidden" name="action" value="set_team_key">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Equipe da Cifrare</label>
-                        <select name="team_id" class="w-full p-2 border rounded" required>
-                            <option value="">Seleziona...</option>
-                            <?php foreach ($teams as $t): ?>
-                                <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Equipe da Cifrare</label>
+                            <select name="team_id" class="w-full p-2 border rounded" required>
+                                <option value="">Seleziona...</option>
+                                <?php foreach ($teams as $t): ?>
+                                    <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Vecchia Chiave (se già impostata)</label>
+                            <input type="password" name="old_team_key" class="w-full p-2 border rounded" placeholder="Lascia vuoto se prima volta">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nuova Chiave Segreta</label>
+                            <input type="password" name="team_key" class="w-full p-2 border rounded" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tua Password (Login)</label>
+                            <input type="password" name="leader_password" class="w-full p-2 border rounded" required>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nuova Chiave Segreta</label>
-                        <input type="password" name="team_key" class="w-full p-2 border rounded" required>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded shadow font-bold hover:bg-red-700 transition">Aggiorna e Ricrittografa</button>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tua Password (Login)</label>
-                        <input type="password" name="leader_password" class="w-full p-2 border rounded" required>
-                    </div>
-                    <button type="submit" class="bg-red-600 text-white p-2 rounded shadow font-bold">Imposta Chiave</button>
                 </form>
             </section>
             <?php endif; ?>
