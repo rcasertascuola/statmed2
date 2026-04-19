@@ -112,8 +112,11 @@ function handlePazienti($db, $method) {
         } else {
             // Patients in current team
             $stmt = $db->prepare("
-                SELECT p.* FROM pazienti p
+                SELECT p.*, u.name as creator_name, t.name as team_name
+                FROM pazienti p
                 JOIN patient_teams pt ON p.id = pt.paziente_id
+                LEFT JOIN users u ON p.created_by = u.id
+                LEFT JOIN teams t ON pt.team_id = t.id
                 WHERE pt.team_id = ?
             ");
             $stmt->execute([$current_team_id]);
@@ -164,14 +167,26 @@ function handleInterventi($db, $method) {
         $paziente_id = $_GET['paziente_id'] ?? null;
         if ($paziente_id) {
             $stmt = $db->prepare("
-                SELECT i.*, ou.name as uo_name
+                SELECT i.*, ou.name as uo_name, u.name as creator_name, t.name as team_name
                 FROM interventi i
                 LEFT JOIN operative_units ou ON i.operative_unit_id = ou.id
+                LEFT JOIN users u ON i.created_by = u.id
+                LEFT JOIN team_operative_units tou ON i.operative_unit_id = tou.operative_unit_id AND tou.team_id = ?
+                LEFT JOIN teams t ON tou.team_id = t.id
                 WHERE i.paziente_id = ?
             ");
-            $stmt->execute([$paziente_id]);
+            $stmt->execute([$current_team_id, $paziente_id]);
         } else {
-            $stmt = $db->prepare("SELECT i.* FROM interventi i JOIN patient_teams pt ON i.paziente_id = pt.paziente_id WHERE pt.team_id = ?");
+            $stmt = $db->prepare("
+                SELECT i.*, ou.name as uo_name, u.name as creator_name, t.name as team_name
+                FROM interventi i
+                JOIN patient_teams pt ON i.paziente_id = pt.paziente_id
+                LEFT JOIN operative_units ou ON i.operative_unit_id = ou.id
+                LEFT JOIN users u ON i.created_by = u.id
+                LEFT JOIN team_operative_units tou ON i.operative_unit_id = tou.operative_unit_id AND tou.team_id = pt.team_id
+                LEFT JOIN teams t ON tou.team_id = t.id
+                WHERE pt.team_id = ?
+            ");
             $stmt->execute([$current_team_id]);
         }
         $interventi = $stmt->fetchAll();
