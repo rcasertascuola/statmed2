@@ -184,9 +184,14 @@ if (isset($_GET['change_team'])) {
             </div>
 
             <div class="mb-8 bg-white p-6 rounded-xl shadow-md border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                    <i class="ph ph-users-four text-blue-600"></i> Le Tue Equipe
-                </h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="ph ph-users-four text-blue-600"></i> Le Tue Equipe
+                    </h3>
+                    <?php if ($current_team_id): ?>
+                    <a href="?change_team=1" class="text-xs text-blue-500 hover:underline">Cambia selezione</a>
+                    <?php endif; ?>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <?php foreach ($teams as $t): ?>
                         <div class="p-4 rounded-lg border <?php echo $t['id'] == $current_team_id ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'; ?> flex justify-between items-center">

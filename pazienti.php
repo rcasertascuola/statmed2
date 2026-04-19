@@ -627,7 +627,7 @@ if ($current_team_id) {
         async function viewDetails(p) {
             currentPazienteId = p.id;
             document.getElementById('detailPazienteNome').innerText = decrypt(p.nome_cognome);
-            document.getElementById('detailPazienteInfo').innerText = "Equipe: " + (p.team_name || 'N/D') + " | Inserito da: " + (p.creator_name || 'N/D');
+            document.getElementById('detailPazienteInfo').innerText = "Equipe: " + (p.team_name || 'N/D') + " | U.O.: " + (p.first_ou_name || 'N/D') + " | Inserito da: " + (p.creator_name || 'N/D');
             await loadInterventi();
             openModal('detailsModal');
         }

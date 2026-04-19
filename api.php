@@ -112,7 +112,8 @@ function handlePazienti($db, $method) {
         } else {
             // Patients in current team
             $stmt = $db->prepare("
-                SELECT p.*, u.name as creator_name, t.name as team_name
+                SELECT p.*, u.name as creator_name, t.name as team_name,
+                (SELECT ou.name FROM interventi i JOIN operative_units ou ON i.operative_unit_id = ou.id WHERE i.paziente_id = p.id ORDER BY i.id ASC LIMIT 1) as first_ou_name
                 FROM pazienti p
                 JOIN patient_teams pt ON p.id = pt.paziente_id
                 LEFT JOIN users u ON p.created_by = u.id
