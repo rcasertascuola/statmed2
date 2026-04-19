@@ -41,20 +41,45 @@ foreach ($data as &$row) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <nav class="bg-purple-700 text-white p-4 shadow-lg flex justify-between items-center">
-        <div class="flex items-center gap-2">
-            <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
-            <h1 class="text-xl font-bold flex items-center gap-2">
-                <i class="ph ph-presentation-chart"></i> StatMed2 Analytics
-            </h1>
-        </div>
-        <div class="flex items-center space-x-2">
-            <a href="index.php" class="bg-white text-purple-700 px-4 py-1 rounded-full font-bold text-sm hover:bg-purple-50 transition">
-                Dashboard
-            </a>
-            <a href="profile.php" class="bg-purple-800 hover:bg-purple-900 p-2 rounded-full text-white transition" title="Profilo">
-                <i class="ph ph-user text-xl"></i>
-            </a>
+    <nav class="bg-purple-700 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <div class="flex items-center gap-2">
+                    <img src="assets/logo_small.png" alt="Logo" class="h-8 w-auto">
+                    <h1 class="text-xl font-bold flex items-center gap-2">
+                        <i class="ph ph-presentation-chart"></i> Analytics
+                    </h1>
+                </div>
+                <div class="flex items-center gap-2 md:hidden">
+                    <a href="index.php" class="bg-white text-purple-700 px-4 py-1 rounded-full font-bold text-sm hover:bg-purple-50 transition">
+                        Dashboard
+                    </a>
+                    <a href="profile.php" class="bg-purple-800 hover:bg-purple-900 p-2 rounded-full text-white transition" title="Profilo">
+                        <i class="ph ph-user text-xl"></i>
+                    </a>
+                    <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
+                        <i class="ph ph-sign-out text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center justify-center md:justify-between w-full md:w-auto gap-4">
+                <span class="text-sm">
+                    Benvenut<?php echo $_SESSION['sex'] === 'F' ? 'a' : 'o'; ?>
+                    <strong class="hidden md:inline"><?php echo htmlspecialchars($_SESSION['name']); ?></strong>
+                    <strong class="md:hidden"><?php echo htmlspecialchars(explode(' ', trim($_SESSION['name']))[0]); ?></strong>
+                </span>
+                <div class="hidden md:flex items-center space-x-2">
+                    <a href="index.php" class="bg-white text-purple-700 px-4 py-1 rounded-full font-bold text-sm hover:bg-purple-50 transition">
+                        Dashboard
+                    </a>
+                    <a href="profile.php" class="bg-purple-800 hover:bg-purple-900 p-2 rounded-full text-white transition" title="Profilo">
+                        <i class="ph ph-user text-xl"></i>
+                    </a>
+                    <a href="login.php?action=logout" class="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition" title="Esci">
+                        <i class="ph ph-sign-out text-xl"></i>
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
 
