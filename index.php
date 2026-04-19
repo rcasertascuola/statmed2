@@ -48,27 +48,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['team_key'])) {
             $provided_key = $_POST['team_key'];
 
-            // Verify key against hash if it exists
-            $stmt = $db->prepare("SELECT team_key_hash FROM teams WHERE id = ?");
-            $stmt->execute([$selected_team_id]);
-            $hash = $stmt->fetchColumn();
+            try {
+                // Verify key against hash if it exists
+                $stmt = $db->prepare("SELECT team_key_hash FROM teams WHERE id = ?");
+                $stmt->execute([$selected_team_id]);
+                $hash = $stmt->fetchColumn();
 
-            if ($hash) {
-                if (password_verify($provided_key, $hash)) {
+                if ($hash) {
+                    if (password_verify($provided_key, $hash)) {
+                        $_SESSION['team_keys'][$selected_team_id] = $provided_key;
+                        $_SESSION['active_team_id'] = $selected_team_id;
+                        header('Location: index.php');
+                        exit;
+                    } else {
+                        $error_message = "Chiave dell'equipe non corretta.";
+                    }
+                } else {
+                    // If no hash exists, we allow it but it might fail decryption
+                    // Ideally we should enforce a hash, but for backward compatibility:
                     $_SESSION['team_keys'][$selected_team_id] = $provided_key;
                     $_SESSION['active_team_id'] = $selected_team_id;
                     header('Location: index.php');
                     exit;
-                } else {
-                    $error_message = "Chiave dell'equipe non corretta.";
                 }
-            } else {
-                // If no hash exists, we allow it but it might fail decryption
-                // Ideally we should enforce a hash, but for backward compatibility:
-                $_SESSION['team_keys'][$selected_team_id] = $provided_key;
-                $_SESSION['active_team_id'] = $selected_team_id;
-                header('Location: index.php');
-                exit;
+            } catch (PDOException $e) {
+                // Handle missing column gracefully
+                if (strpos($e->getMessage(), 'Unknown column') !== false || strpos($e->getMessage(), 'no such column') !== false) {
+                    $error_message = "Errore di configurazione: database non aggiornato. Contattare l'amministratore (Update v4 richiesto).";
+                } else {
+                    $error_message = "Errore durante la verifica: " . $e->getMessage();
+                }
             }
         } else {
             $_SESSION['active_team_id'] = $selected_team_id;

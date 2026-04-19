@@ -44,6 +44,11 @@ function login($username, $password) {
     return false;
 }
 
+// Ensure session team_keys is always an array
+if (isset($_SESSION['user_id']) && !isset($_SESSION['team_keys'])) {
+    $_SESSION['team_keys'] = [];
+}
+
 function decryptWithKey($encrypted_data, $key_str) {
     $data = base64_decode($encrypted_data);
     if (!$data) return false;
